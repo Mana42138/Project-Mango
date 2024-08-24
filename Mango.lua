@@ -9,8 +9,8 @@ local Main_Folder = 'nl\\Mango\\'
 local Configs_Path = Main_Folder..'configs'
 
 -- // Files \\ --
-files.write('nl\\Mango\\modules\\easing.lua', network.get("https://pastebin.com/raw/m97ut0TN"))
-files.write('nl\\Mango\\modules\\base64AD.lua', network.get("https://gitlab.com/madsbrriinckbastholm/mango/-/raw/main/Base%2064%20Advanced"))
+files.write('nl\\Mango\\modules\\easing.lua', network.get("https://raw.githubusercontent.com/Mana42138/Project-Mango/main/easing.lua"))
+files.write('nl\\Mango\\modules\\base64AD.lua', network.get("https://raw.githubusercontent.com/Mana42138/Project-Mango/main/Base%2064%20Advanced.lua"))
 if not files.read('nl\\Mango\\configs.json') then
     files.write('nl\\Mango\\configs.json', json.stringify({}))
 end
