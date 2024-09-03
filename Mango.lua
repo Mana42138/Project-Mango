@@ -79,28 +79,21 @@ local Main = {
 
 local Flags = {}
 
-local function wait(time, flag, callback)
-    -- Initialize the flag if not already set
+local function wait(options)
+    local time, flag, Number, callback = options.time, options.flag, options.Number, options.callback
     if Flags[flag] == nil then
         Flags[flag] = {active = false, wait_time = 0}
     end
 
-    -- Check if the flag is active
     if Flags[flag].active then
-        -- Accumulate time
-        Flags[flag].wait_time = Flags[flag].wait_time + 0.01
-
-        -- Check if the accumulated wait_time has reached or exceeded the specified time
+        Flags[flag].wait_time = Flags[flag].wait_time + Number or 0.01
         if Flags[flag].wait_time >= time then
-            -- Execute the callback function
             callback()
 
-            -- Reset the flag and wait_time
             Flags[flag].active = false
             Flags[flag].wait_time = 0
         end
     else
-        -- Start a new wait operation
         Flags[flag].active = true
     end
 end
@@ -267,7 +260,7 @@ local Builder_Table = {[1]='Global', [2]='Standing', [3]='Walking', [4]='Running
 
 local Chose_Options = Access_add("ChAA", "AA_options", Main.Tabs.Builder:list("", Builder_Table))
 
-local Builder_Section = ui.create("🔰 Anti-Aim", "Anti-Aim Builder")
+local Builder_Section = Main.Tabs.AntiAim
 
 local function TurnTalbe(input)
     return Builder_Table[input]
@@ -373,6 +366,8 @@ Main.Items.Global_AA_Y_Time = Main.Items.Global_AA_Yaw_Add_Type:create():slider(
 
 Main.Items.Global_AA_E_Angel_Pitch = Main.Items.Global_AA_Extended_Angels:create():slider("Extended Pitch", -180, 180, 0, 1)
 Main.Items.Global_AA_E_Angel_Roll = Main.Items.Global_AA_Extended_Angels:create():slider("Extended Roll", 0, 90, 0, 1)
+Main.Items.Global_AA_E_Angel_Randomizer = Main.Items.Global_AA_Extended_Angels:create():switch("Randomizer")
+
 
 Main.Items.Global_AA_YM_Modifier = Main.Items.Global_AA_Yaw_Modifier:create():slider("Offset", -180, 180, 0, 1)
 Main.Items.Global_AA_YM_Modifier_randomize = Main.Items.Global_AA_Yaw_Modifier:create():switch("random"):tooltip("choses a random modifier")
@@ -381,7 +376,6 @@ Main.Items.Global_AA_YM_Modifier_randomize = Main.Items.Global_AA_Yaw_Modifier:c
 Main.Items.Global_AA_Enable:set_callback(function()
     extasy_global(TurnTalbe(Chose_Options:get()))
 end)
-
 
 local function Global_AA_Modifier(allowed)
     if allowed == false then
@@ -462,12 +456,46 @@ local function Global_AA_Modifier(allowed)
             end
         end
 
+        if Global_Flag == nil and Global_Flag_2 == nil then
+            Global_Flag = false
+            Global_Flag_2 = false
+        end
+
         if Main.Items.Global_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-            AAWait(Main.Items.Global_AA_Y_Time:get(), function()
-                ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Global_AA_Y_Add_Right:get())
-            end, function()
-                ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Global_AA_Y_Add_Left:get())
-            end)
+            wait({
+                time = Main.Items.Global_AA_Y_Time:get()/10,
+                flag = "Global_Jitter",
+                Number = 0.1,
+                callback = function()
+                    if math.random(1, 5) == 5 then
+                        Global_Flag_2 = true
+                        if math.random(1, 2) == 1 then
+                            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                        else
+                            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                        end
+                    else
+                        if Global_Flag then
+                            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Global_AA_Y_Add_Right:get())
+                        else
+                            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Global_AA_Y_Add_Left:get())
+                        end
+                    end
+                    Global_Flag = not Global_Flag
+                end
+            })
+
+            wait({
+                time = 1,
+                flag = "Global_Flick",
+                Number = 0.9,
+                callback = function()
+                    if Global_Flag_2 then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                        Global_Flag_2 = false
+                    end
+                end
+            })
         end
 
         if Main.Items.Global_AA_Yaw_Add_Type:get() == 'Static' then
@@ -480,14 +508,14 @@ local function Global_AA_Modifier(allowed)
 
         local YawModifier = Main.Items.Global_AA_Yaw_Modifier:get()
 
-        if YawModifier ~= "Disabled" then
+        -- if YawModifier ~= "Disabled" then
             if Main.Items.Global_AA_YM_Modifier_randomize:get() then
                 YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
             end
             
             ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.Global_AA_YM_Modifier:get())
             ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
-        end
+        -- end
 
         ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Global_AA_Left_Limit:get())
         ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Global_AA_Right_Limit:get())
@@ -495,8 +523,13 @@ local function Global_AA_Modifier(allowed)
 
         if Main.Items.Global_AA_Extended_Angels:get() then
             ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Global_AA_Extended_Angels:get())
-            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.Global_AA_E_Angel_Pitch:get())
-            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.Global_AA_E_Angel_Roll:get())
+            if Main.Items.Global_AA_E_Angel_Randomizer:get() then
+                ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(math.random(-180, 180))
+                ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(math.random(0, 90))
+            else
+                ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.Global_AA_E_Angel_Pitch:get())
+                ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.Global_AA_E_Angel_Roll:get())
+            end
         end
     end
 end
@@ -522,6 +555,7 @@ Main.Items.Standing_AA_Y_Time = Main.Items.Standing_AA_Yaw_Add_Type:create():sli
 
 Main.Items.Standing_AA_E_Angel_Pitch = Main.Items.Standing_AA_Extended_Angels:create():slider("Extended Pitch", -180, 180, 0, 1)
 Main.Items.Standing_AA_E_Angel_Roll = Main.Items.Standing_AA_Extended_Angels:create():slider("Extended Roll", 0, 90, 0, 1)
+Main.Items.Standing_AA_E_Angel_Randomizer = Main.Items.Standing_AA_Extended_Angels:create():switch("Randomizer")
 
 Main.Items.Standing_AA_YM_Modifier = Main.Items.Standing_AA_Yaw_Modifier:create():slider("Offset", -180, 180, 0, 1)
 Main.Items.Standing_AA_YM_Modifier_randomize = Main.Items.Standing_AA_Yaw_Modifier:create():switch("random"):tooltip("choses a random modifier")
@@ -609,12 +643,50 @@ local function Standing_AA_Modifier()
         end
     end
 
+    if Standing_Flag == nil and Standing_Flag_2 == nil then
+        Standing_Flag = false
+        Standing_Flag_2 = false
+    end
+
     if Main.Items.Standing_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        AAWait(Main.Items.Standing_AA_Y_Time:get(), function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Right:get())
-        end, function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Left:get())
-        end)
+        wait({
+            time = Main.Items.Standing_AA_Y_Time:get()/10,
+            flag = "Standing_Jitter",
+            Number = 0.1,
+            callback = function()
+                if math.random(1, 5) == 5 then
+                    Standing_Flag_2 = true
+                    if math.random(1, 2) == 1 then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                    end
+                else
+                    if Standing_Flag then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Right:get())
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Left:get())
+                    end
+                end
+                Standing_Flag = not Standing_Flag
+            end
+        })
+        wait({
+            time = 1,
+            flag = "Standing_Flick",
+            Number = 0.9,
+            callback = function()
+                if Standing_Flag_2 then
+                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    Standing_Flag_2 = false
+                end
+            end
+        })
+        -- AAWait(Main.Items.Standing_AA_Y_Time:get(), function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Right:get())
+        -- end, function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Left:get())
+        -- end)
     end
 
     if Main.Items.Standing_AA_Yaw_Add_Type:get() == 'Static' then
@@ -627,14 +699,14 @@ local function Standing_AA_Modifier()
 
     local YawModifier = Main.Items.Standing_AA_Yaw_Modifier:get()
 
-    if YawModifier ~= "Disabled" then
+    -- if YawModifier ~= "Disabled" then
         if Main.Items.Standing_AA_YM_Modifier_randomize:get() then
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.Standing_AA_YM_Modifier:get())
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
-    end
+    -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Standing_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Standing_AA_Right_Limit:get())
@@ -642,47 +714,55 @@ local function Standing_AA_Modifier()
 
     if Main.Items.Standing_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Standing_AA_Extended_Angels:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.Standing_AA_E_Angel_Pitch:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.Standing_AA_E_Angel_Roll:get())
+        if Main.Items.Standing_AA_E_Angel_Randomizer:get() then
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(math.random(-180, 180))
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(math.random(0, 90))
+        else
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.Standing_AA_E_Angel_Pitch:get())
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.Standing_AA_E_Angel_Roll:get())
+        end
     end
 
 end
 
+local Setting = "Walking"
 
-Main.Items.Walking_AA_Enable = Builder_Section:switch("Walking Enable")
+Main.Items[Setting.."_AA_Enable"] = Builder_Section:switch("Walking Enable")
 
-Main.Items.Walking_AA_pitch_settings = Builder_Section:combo("W ~ pitch settings", {"None", "Zero", 'Up', "Down", "Random", "Jitter", "45 deg"}):visibility(false)
-Main.Items.Walking_AA_yaw_settings = Builder_Section:combo("W ~ yaw settings", {"None", "Static", 'Random', "Side-Way", "Spin"}):visibility(false)
-Main.Items.Walking_AA_SpinSpeed = Main.Items.Walking_AA_yaw_settings:create():slider("Spin Speed", 0, 1000, 0, 1):visibility(false)
-Main.Items.Walking_AA_Randomize_SpinSpeed = Main.Items.Walking_AA_yaw_settings:create():switch("Randomize Spin Speed"):visibility(false)
+Main.Items[Setting.."_AA_pitch_settings"] = Builder_Section:combo("W ~ pitch settings", {"None", "Zero", 'Up', "Down", "Random", "Jitter", "45 deg"}):visibility(false)
+Main.Items[Setting.."_AA_yaw_settings"] = Builder_Section:combo("W ~ yaw settings", {"None", "Static", 'Random', "Side-Way", "Spin"}):visibility(false)
+Main.Items[Setting.."_AA_SpinSpeed"] = Main.Items[Setting.."_AA_yaw_settings"]:create():slider("Spin Speed", 0, 1000, 0, 1):visibility(false)
+Main.Items[Setting.."_AA_Randomize_SpinSpeed"] = Main.Items[Setting.."_AA_yaw_settings"]:create():switch("Randomize Spin Speed"):visibility(false)
 
-Main.Items.Walking_AA_Yaw_Add_Type = Builder_Section:combo("W ~ Yaw Add Type", {"Static", "Jitter"})
-Main.Items.Walking_AA_Yaw_Modifier = Builder_Section:combo("W ~ Yaw Modifier", Yaw_modifier_List)
+Main.Items[Setting.."_AA_Yaw_Add_Type"] = Builder_Section:combo("W ~ Yaw Add Type", {"Static", "Jitter"})
+Main.Items[Setting.."_AA_Yaw_Modifier"] = Builder_Section:combo("W ~ Yaw Modifier", Yaw_modifier_List)
 
-Main.Items.Walking_AA_Left_Limit = Builder_Section:slider("W ~ Left Limit", 0, 60, 0, 1)
-Main.Items.Walking_AA_Right_Limit = Builder_Section:slider("W ~ Right Limit", 0, 60, 0, 1)
-Main.Items.Walking_AA_Options = Builder_Section:selectable("W ~ Options", ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):list())
-Main.Items.Walking_AA_Extended_Angels = Builder_Section:switch("W ~ Extended Angels", false)
+Main.Items[Setting.."_AA_Left_Limit"] = Builder_Section:slider("W ~ Left Limit", 0, 60, 0, 1)
+Main.Items[Setting.."_AA_Right_Limit"] = Builder_Section:slider("W ~ Right Limit", 0, 60, 0, 1)
+Main.Items[Setting.."_AA_Options"] = Builder_Section:selectable("W ~ Options", ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):list())
+Main.Items[Setting.."_AA_Extended_Angels"] = Builder_Section:switch("W ~ Extended Angels", false)
 
-Main.Items.Walking_AA_Y_Add_Left = Main.Items.Walking_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
-Main.Items.Walking_AA_Y_Add_Right = Main.Items.Walking_AA_Yaw_Add_Type:create():slider("Yaw Add - Right", -90, 90, 0, 1)
-Main.Items.Walking_AA_Y_Time = Main.Items.Walking_AA_Yaw_Add_Type:create():slider("Yaw Snap", 0, 20, 0, 1)
+Main.Items[Setting.."_AA_Y_Add_Left"] = Main.Items[Setting.."_AA_Yaw_Add_Type"]:create():slider("Yaw Add - Left", -90, 90, 0, 1)
+Main.Items[Setting.."_AA_Y_Add_Right"] = Main.Items[Setting.."_AA_Yaw_Add_Type"]:create():slider("Yaw Add - Right", -90, 90, 0, 1)
+Main.Items[Setting.."_AA_Y_Time"] = Main.Items[Setting.."_AA_Yaw_Add_Type"]:create():slider("Yaw Snap", 0, 20, 0, 1)
 
-Main.Items.Walking_AA_E_Angel_Pitch = Main.Items.Walking_AA_Extended_Angels:create():slider("Extended Pitch", -180, 180, 0, 1)
-Main.Items.Walking_AA_E_Angel_Roll = Main.Items.Walking_AA_Extended_Angels:create():slider("Extended Roll", 0, 90, 0, 1)
-
-Main.Items.Walking_AA_YM_Modifier = Main.Items.Walking_AA_Yaw_Modifier:create():slider("Offset", -180, 180, 0, 1)
-Main.Items.Walking_AA_YM_Modifier_randomize = Main.Items.Walking_AA_Yaw_Modifier:create():switch("random"):tooltip("choses a random modifier")
+Main.Items[Setting.."_AA_E_Angel_Pitch"] = Main.Items[Setting.."_AA_Extended_Angels"]:create():slider("Extended Pitch", -180, 180, 0, 1)
+Main.Items[Setting.."_AA_E_Angel_Roll"] = Main.Items[Setting.."_AA_Extended_Angels"]:create():slider("Extended Roll", 0, 90, 0, 1)
+Main.Items[Setting.."_AA_E_Angel_Randomizer"] = Main.Items[Setting.."_AA_Extended_Angels"]:create():switch("Randomizer")
 
 
-Main.Items.Walking_AA_Enable:set_callback(function()
+Main.Items[Setting.."_AA_YM_Modifier"] = Main.Items[Setting.."_AA_Yaw_Modifier"]:create():slider("Offset", -180, 180, 0, 1)
+Main.Items[Setting.."_AA_YM_Modifier_randomize"] = Main.Items[Setting.."_AA_Yaw_Modifier"]:create():switch("random"):tooltip("choses a random modifier")
+
+
+Main.Items[Setting.."_AA_Enable"]:set_callback(function()
     extasy_global(TurnTalbe(Chose_Options:get()))
 end)
 
 
 local function Walking_AA_Modifier()
     if ui.find("Aimbot", "Anti Aim", "Angles", "Freestanding"):get() then return end
-    if not Main.Items.Walking_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
+    if not Main.Items[Setting.."_AA_Enable"]:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
 
@@ -758,12 +838,50 @@ local function Walking_AA_Modifier()
         end
     end
 
+    if not Walking_Flag and not Walking_Flag_2 then
+        Walking_Flag = false
+        Walking_Flag_2 = false
+    end
+
     if Main.Items.Walking_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        AAWait(Main.Items.Walking_AA_Y_Time:get(), function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Right:get())
-        end, function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Left:get())
-        end)
+        wait({
+            time = Main.Items.Walking_AA_Y_Time:get()/10,
+            flag = "Walking_Jitter",
+            Number = 0.1,
+            callback = function()
+                if math.random(1, 5) == 5 then
+                    Walking_Flag_2 = true
+                    if math.random(1, 2) == 1 then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                    end
+                else
+                    if Walking_Flag then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Right:get())
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Left:get())
+                    end
+                end
+                Walking_Flag = not Walking_Flag
+            end
+        })
+        wait({
+            time = 1,
+            flag = "Walking_Flick",
+            Number = 0.9,
+            callback = function()
+                if Walking_Flag_2 then
+                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    Walking_Flag_2 = false
+                end
+            end
+        })
+        -- AAWait(Main.Items.Walking_AA_Y_Time:get(), function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Right:get())
+        -- end, function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Left:get())
+        -- end)
     end
 
     if Main.Items.Walking_AA_Yaw_Add_Type:get() == 'Static' then
@@ -776,14 +894,14 @@ local function Walking_AA_Modifier()
 
     local YawModifier = Main.Items.Walking_AA_Yaw_Modifier:get()
 
-    if YawModifier ~= "Disabled" then
+    -- if YawModifier ~= "Disabled" then
         if Main.Items.Walking_AA_YM_Modifier_randomize:get() then
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.Walking_AA_YM_Modifier:get())
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
-    end
+    -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Walking_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Walking_AA_Right_Limit:get())
@@ -791,8 +909,13 @@ local function Walking_AA_Modifier()
 
     if Main.Items.Walking_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Walking_AA_Extended_Angels:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.Walking_AA_E_Angel_Pitch:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.Walking_AA_E_Angel_Roll:get())
+        if Main.Items[Setting.."_AA_E_Angel_Randomizer"]:get() then
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(math.random(-180, 180))
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(math.random(0, 90))
+        else
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.Walking_AA_E_Angel_Pitch:get())
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.Walking_AA_E_Angel_Roll:get())
+        end
     end
 
 end
@@ -819,6 +942,7 @@ Main.Items.Running_AA_Y_Time = Main.Items.Running_AA_Yaw_Add_Type:create():slide
 
 Main.Items.Running_AA_E_Angel_Pitch = Main.Items.Running_AA_Extended_Angels:create():slider("Extended Pitch", -180, 180, 0, 1)
 Main.Items.Running_AA_E_Angel_Roll = Main.Items.Running_AA_Extended_Angels:create():slider("Extended Roll", 0, 90, 0, 1)
+Main.Items.Running_AA_E_Angel_Randomizer = Main.Items.Running_AA_Extended_Angels:create():switch("Randomizer")
 
 Main.Items.Running_AA_YM_Modifier = Main.Items.Running_AA_Yaw_Modifier:create():slider("Offset", -180, 180, 0, 1)
 Main.Items.Running_AA_YM_Modifier_randomize = Main.Items.Running_AA_Yaw_Modifier:create():switch("random"):tooltip("choses a random modifier")
@@ -907,12 +1031,50 @@ local function Running_AA_Modifier()
         end
     end
 
+    if not Running_Flag and not Running_Flag_2 then
+        Running_Flag = false
+        Running_Flag_2 = false
+    end
+
     if Main.Items.Running_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        AAWait(Main.Items.Running_AA_Y_Time:get(), function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Right:get())
-        end, function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Left:get())
-        end)
+        wait({
+            time = Main.Items.Running_AA_Y_Time:get()/10,
+            flag = "Running_Jitter",
+            Number = 0.1,
+            callback = function()
+                if math.random(1, 5) == 5 then
+                    Running_Flag_2 = true
+                    if math.random(1, 2) == 1 then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                    end
+                else
+                    if Running_Flag then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Right:get())
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Left:get())
+                    end
+                end
+                Running_Flag = not Running_Flag
+            end
+        })
+        wait({
+            time = 1,
+            flag = "Running_Flick",
+            Number = 0.9,
+            callback = function()
+                if Running_Flag_2 then
+                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    Running_Flag_2 = false
+                end
+            end
+        })
+        -- AAWait(Main.Items.Running_AA_Y_Time:get(), function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Right:get())
+        -- end, function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Left:get())
+        -- end)
     end
 
     if Main.Items.Running_AA_Yaw_Add_Type:get() == 'Static' then
@@ -925,14 +1087,14 @@ local function Running_AA_Modifier()
 
     local YawModifier = Main.Items.Running_AA_Yaw_Modifier:get()
 
-    if YawModifier ~= "Disabled" then
+    -- if YawModifier ~= "Disabled" then
         if Main.Items.Running_AA_YM_Modifier_randomize:get() then
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.Running_AA_YM_Modifier:get())
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
-    end
+    -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Running_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Running_AA_Right_Limit:get())
@@ -940,8 +1102,13 @@ local function Running_AA_Modifier()
 
     if Main.Items.Running_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Running_AA_Extended_Angels:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.Running_AA_E_Angel_Pitch:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.Running_AA_E_Angel_Roll:get())
+        if Main.Items.Running_AA_E_Angel_Randomizer:get() then
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(math.random(-180, 180))
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(math.random(0, 90))
+        else
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.Running_AA_E_Angel_Pitch:get())
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.Running_AA_E_Angel_Roll:get())
+        end
     end
 
 end
@@ -969,6 +1136,8 @@ Main.Items.Crouching_AA_Y_Time = Main.Items.Crouching_AA_Yaw_Add_Type:create():s
 
 Main.Items.Crouching_AA_E_Angel_Pitch = Main.Items.Crouching_AA_Extended_Angels:create():slider("Extended Pitch", -180, 180, 0, 1)
 Main.Items.Crouching_AA_E_Angel_Roll = Main.Items.Crouching_AA_Extended_Angels:create():slider("Extended Roll", 0, 90, 0, 1)
+Main.Items.Crouching_AA_E_Angel_Randomizer = Main.Items.Crouching_AA_Extended_Angels:create():switch("Randomizer")
+
 
 Main.Items.Crouching_AA_YM_Modifier = Main.Items.Crouching_AA_Yaw_Modifier:create():slider("Offset", -180, 180, 0, 1)
 Main.Items.Crouching_AA_YM_Modifier_randomize = Main.Items.Crouching_AA_Yaw_Modifier:create():switch("random"):tooltip("choses a random modifier")
@@ -1057,12 +1226,51 @@ local function Crouching_AA_Modifier()
         end
     end
 
+    if not Crouching_Flag and not Crouching_Flag2 then
+        Crouching_Flag = false
+        Crouching_Flag2 = false
+    end
+
     if Main.Items.Crouching_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        AAWait(Main.Items.Crouching_AA_Y_Time:get(), function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Right:get())
-        end, function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Left:get())
-        end)
+        wait({
+            time = Main.Items.Crouching_AA_Y_Time:get()/10,
+            flag = "Crouching_Jitter",
+            Number = 0.1,
+            callback = function()
+                if math.random(1, 5) == 5 then
+                    Crouching_Flag2 = true
+                    if math.random(1, 2) == 1 then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                    end
+                else
+                    if Crouching_Flag then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Right:get())
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Left:get())
+                    end
+                end
+
+                Crouching_Flag = not Crouching_Flag
+            end
+        })
+        wait({
+            time = 1,
+            flag = "Crouching_Flick",
+            Number = 0.9,
+            callback = function()
+                if Crouching_Flag2 then
+                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    Crouching_Flag2 = false
+                end
+            end
+        })
+        -- AAWait(Main.Items.Crouching_AA_Y_Time:get(), function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Right:get())
+        -- end, function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Left:get())
+        -- end)
     end
 
     if Main.Items.Crouching_AA_Yaw_Add_Type:get() == 'Static' then
@@ -1075,14 +1283,14 @@ local function Crouching_AA_Modifier()
 
     local YawModifier = Main.Items.Crouching_AA_Yaw_Modifier:get()
 
-    if YawModifier ~= "Disabled" then
+    -- if YawModifier ~= "Disabled" then
         if Main.Items.Crouching_AA_YM_Modifier_randomize:get() then
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.Crouching_AA_YM_Modifier:get())
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
-    end
+    -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Crouching_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Crouching_AA_Right_Limit:get())
@@ -1090,8 +1298,13 @@ local function Crouching_AA_Modifier()
 
     if Main.Items.Crouching_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Crouching_AA_Extended_Angels:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.Crouching_AA_E_Angel_Pitch:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.Crouching_AA_E_Angel_Roll:get())
+        if Main.Items.Crouching_AA_E_Angel_Randomizer:get() then
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(math.random(-180, 180))
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(math.random(0, 90))
+        else
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.Crouching_AA_E_Angel_Pitch:get())
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.Crouching_AA_E_Angel_Roll:get())
+        end
     end
 
 end
@@ -1118,6 +1331,8 @@ Main.Items.In_Air_AA_Y_Time = Main.Items.In_Air_AA_Yaw_Add_Type:create():slider(
 
 Main.Items.In_Air_AA_E_Angel_Pitch = Main.Items.In_Air_AA_Extended_Angels:create():slider("Extended Pitch", -180, 180, 0, 1)
 Main.Items.In_Air_AA_E_Angel_Roll = Main.Items.In_Air_AA_Extended_Angels:create():slider("Extended Roll", 0, 90, 0, 1)
+Main.Items.In_Air_AA_E_Angel_Randomizer = Main.Items.In_Air_AA_Extended_Angels:create():switch("Randomizer")
+
 
 Main.Items.In_Air_AA_YM_Modifier = Main.Items.In_Air_AA_Yaw_Modifier:create():slider("Offset", -180, 180, 0, 1)
 Main.Items.In_Air_AA_YM_Modifier_randomize = Main.Items.In_Air_AA_Yaw_Modifier:create():switch("random"):tooltip("choses a random modifier")
@@ -1206,12 +1421,50 @@ local function In_Air_AA_Modifier()
         end
     end
 
+    if not In_Air_Flag and not In_Air_Flag2 then
+        In_Air_Flag = false
+        In_Air_Flag2 = false
+    end
+
     if Main.Items.In_Air_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        AAWait(Main.Items.In_Air_AA_Y_Time:get(), function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Right:get())
-        end, function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Left:get())
-        end)
+        wait({
+            time = Main.Items.In_Air_AA_Y_Time:get()/10,
+            flag = "In_Air_Jitter",
+            Number = 0.1,
+            callback = function()
+                if math.random(1, 5) == 5 then
+                    In_Air_Flag2 = true
+                    if math.random(1, 2) == 1 then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                    end
+                else
+                    if In_Air_Flag then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Right:get())
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Left:get())
+                    end
+                end
+                In_Air_Flag = not In_Air_Flag
+            end
+        })
+        wait({
+            time = 1,
+            flag = "In_Air_Flick",
+            Number = 0.9,
+            callback = function()
+                if In_Air_Flag2 then
+                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    In_Air_Flag2 = false
+                end
+            end
+        })
+        -- AAWait(Main.Items.In_Air_AA_Y_Time:get(), function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Right:get())
+        -- end, function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Left:get())
+        -- end)
     end
 
     if Main.Items.In_Air_AA_Yaw_Add_Type:get() == 'Static' then
@@ -1224,14 +1477,14 @@ local function In_Air_AA_Modifier()
 
     local YawModifier = Main.Items.In_Air_AA_Yaw_Modifier:get()
 
-    if YawModifier ~= "Disabled" then
+    -- if YawModifier ~= "Disabled" then
         if Main.Items.In_Air_AA_YM_Modifier_randomize:get() then
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.In_Air_AA_YM_Modifier:get())
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
-    end
+    -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.In_Air_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.In_Air_AA_Right_Limit:get())
@@ -1239,8 +1492,13 @@ local function In_Air_AA_Modifier()
 
     if Main.Items.In_Air_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.In_Air_AA_Extended_Angels:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.In_Air_AA_E_Angel_Pitch:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.In_Air_AA_E_Angel_Roll:get())
+        if Main.Items.In_Air_AA_E_Angel_Randomizer:get() then
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(math.random(-180, 180))
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(math.random(0, 90))
+        else
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.In_Air_AA_E_Angel_Pitch:get())
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.In_Air_AA_E_Angel_Roll:get())
+        end
     end
 
 end
@@ -1267,6 +1525,8 @@ Main.Items.In_Air_AC_AA_Y_Time = Main.Items.In_Air_AC_AA_Yaw_Add_Type:create():s
 
 Main.Items.In_Air_AC_AA_E_Angel_Pitch = Main.Items.In_Air_AC_AA_Extended_Angels:create():slider("Extended Pitch", -180, 180, 0, 1)
 Main.Items.In_Air_AC_AA_E_Angel_Roll = Main.Items.In_Air_AC_AA_Extended_Angels:create():slider("Extended Roll", 0, 90, 0, 1)
+Main.Items.In_Air_AC_AA_E_Angel_Randomizer = Main.Items.In_Air_AA_Extended_Angels:create():switch("Randomizer")
+
 
 Main.Items.In_Air_AC_AA_YM_Modifier = Main.Items.In_Air_AC_AA_Yaw_Modifier:create():slider("Offset", -180, 180, 0, 1)
 Main.Items.In_Air_AC_AA_YM_Modifier_randomize = Main.Items.In_Air_AC_AA_Yaw_Modifier:create():switch("random"):tooltip("choses a random modifier")
@@ -1355,12 +1615,50 @@ local function In_Air_AC_AA_Modifier()
         end
     end
 
+    if not In_Air_AC_Flag and not In_Air_AC_Flag2 then
+        In_Air_AC_Flag = false
+        In_Air_AC_Flag2 = false
+    end
+
     if Main.Items.In_Air_AC_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        AAWait(Main.Items.In_Air_AC_AA_Y_Time:get(), function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
-        end, function()
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
-        end)
+        wait({
+            time = Main.Items.In_Air_AC_AA_Y_Time:get()/10,
+            flag = "In_Air_AC_Jitter",
+            Number = 0.1,
+            callback = function()
+                if math.random(1, 5) == 5 then
+                    In_Air_AC_Flag2 = true
+                    if math.random(1, 2) == 1 then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                    end
+                else
+                    if In_Air_AC_Flag then
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
+                    else
+                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
+                    end
+                end
+                In_Air_AC_Flag = not In_Air_AC_Flag
+            end
+        })
+        wait({
+            time = 1,
+            flag = "In_Air_AC_Flick",
+            Number = 0.9,
+            callback = function()
+                if In_Air_AC_Flag2 then
+                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    In_Air_AC_Flag2 = false
+                end
+            end
+        })
+        -- AAWait(Main.Items.In_Air_AC_AA_Y_Time:get(), function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
+        -- end, function()
+        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
+        -- end)
     end
 
     if Main.Items.In_Air_AC_AA_Yaw_Add_Type:get() == 'Static' then
@@ -1373,14 +1671,14 @@ local function In_Air_AC_AA_Modifier()
 
     local YawModifier = Main.Items.In_Air_AC_AA_Yaw_Modifier:get()
 
-    if YawModifier ~= "Disabled" then
+    -- if YawModifier ~= "Disabled" then
         if Main.Items.In_Air_AC_AA_YM_Modifier_randomize:get() then
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.In_Air_AC_AA_YM_Modifier:get())
         ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
-    end
+    -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.In_Air_AC_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.In_Air_AC_AA_Right_Limit:get())
@@ -1388,8 +1686,13 @@ local function In_Air_AC_AA_Modifier()
 
     if Main.Items.In_Air_AC_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.In_Air_AC_AA_Extended_Angels:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.In_Air_AC_AA_E_Angel_Pitch:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.In_Air_AC_AA_E_Angel_Roll:get())
+        if Main.Items.In_Air_AC_AA_E_Angel_Randomizer:get() then
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(math.random(-180, 180))
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(math.random(0, 90))
+        else
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Pitch"):override(Main.Items.In_Air_AC_AA_E_Angel_Pitch:get())
+            ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles", "Extended Roll"):override(Main.Items.In_Air_AC_AA_E_Angel_Roll:get())
+        end
     end
 
 end
@@ -1400,7 +1703,7 @@ Main.Items.Fake_Lag_AA_Enable = Builder_Section:switch("Fake Lag Enable")
 Main.Items.Fake_Lag_AA_Randomizer = Builder_Section:switch("FL ~ Randomize")
 Main.Items.Fake_Lag_AA_Max_Limit = Builder_Section:slider("FL ~ Max Limit", 0, 14, 0, 1)
 Main.Items.Fake_Lag_AA_Min_Limit = Builder_Section:slider("FL ~ Min Limit", 0, 14, 0, 1)
-Main.Items.Fake_Lag_AA_Next_Phase_Time = Builder_Section:slider("FL ~ Next Phase Time", 0, 200, 0, 0.1)
+Main.Items.Fake_Lag_AA_Next_Phase_Time = Builder_Section:slider("FL ~ Next Phase Time", 0, 20, 0, 1)
 
 Main.Items.Fake_Lag_AA_Variability = Builder_Section:slider("FL ~ Variability", 0, 100, 0, 1)
 
@@ -1419,9 +1722,14 @@ local function Fake_Lag_AA_Modifier()
     if not localplayer then return end
 
     if Main.Items.Fake_Lag_AA_Variability_choker:get() then
-        wait(0.5, "Fake_Lag_Variability", function()
-            ui.find("Aimbot", "Anti Aim", "Fake Lag", "Variability"):override(math.random(0, 100))
-        end)
+        wait({
+            time = math.random(),
+            flag = "Fake_Lag_Variability",
+            Number = 0.01,
+            callback = function()
+                ui.find("Aimbot", "Anti Aim", "Fake Lag", "Variability"):override(math.random(0, 100))
+            end
+        })
     else
         ui.find("Aimbot", "Anti Aim", "Fake Lag", "Variability"):override(Main.Items.Fake_Lag_AA_Variability:get())
     end
@@ -1434,9 +1742,14 @@ local function Fake_Lag_AA_Modifier()
 
 
     if Main.Items.Fake_Lag_AA_Randomizer:get() then
-        wait(0.1, "Fake_Lag_Limit", function()
-            ui.find("Aimbot", "Anti Aim", "Fake Lag", "Limit"):override(math.random(Main.Items.Fake_Lag_AA_Min_Limit:get(), Main.Items.Fake_Lag_AA_Max_Limit:get()))
-        end)
+        wait({
+            time = Main.Items.Fake_Lag_AA_Next_Phase_Time:get()/10,
+            flag = "Fake_Lag_Limit",
+            Number = 0.01,
+            callback = function()
+                ui.find("Aimbot", "Anti Aim", "Fake Lag", "Limit"):override(math.random(Main.Items.Fake_Lag_AA_Min_Limit:get(), Main.Items.Fake_Lag_AA_Max_Limit:get()))
+            end
+        })
     else
         ui.find("Aimbot", "Anti Aim", "Fake Lag", "Limit"):override(Main.Items.Fake_Lag_AA_Max_Limit:get())
     end
@@ -1530,11 +1843,11 @@ Chose_Options:set_callback(function()
     -- end
 end)
 
-Main.Items.Defensive = Main.Tabs.AntiAim:switch("Defensive Anti-Aim")
+-- Main.Items.Defensive = Main.Tabs.AntiAim:switch("Defensive Anti-Aim")
 
-local pitch_settings = Access_add("pitch_settings", "DefAA", Main.Tabs.AntiAim:combo("pitch settings", {"Zero", 'Up', "Down", "Random", "Jitter", "45 deg"}):visibility(false))
-local yaw_settings = Access_add("yaw_settings", "DefAA", Main.Tabs.AntiAim:combo("yaw settings", {"Static", 'Random', "Side-Way", "Spin"}):visibility(false))
-local SpinSpeed = Access_add("SpinSpeed", "DefAA", Main.Tabs.AntiAim:slider("Spin Speed", 0, 1000, 0, 1):visibility(false))
+-- local pitch_settings = Access_add("pitch_settings", "DefAA", Main.Tabs.AntiAim:combo("pitch settings", {"Zero", 'Up', "Down", "Random", "Jitter", "45 deg"}):visibility(false))
+-- local yaw_settings = Access_add("yaw_settings", "DefAA", Main.Tabs.AntiAim:combo("yaw settings", {"Static", 'Random', "Side-Way", "Spin"}):visibility(false))
+-- local SpinSpeed = Access_add("SpinSpeed", "DefAA", Main.Tabs.AntiAim:slider("Spin Speed", 0, 1000, 0, 1):visibility(false))
 
 Main.Items.randomize = Main.Tabs.Ragebot:switch("Randomize DT"):tooltip("The More you turn up max the more it gets randomized")
 Main.Items.Max = Main.Items.randomize:create():slider("Max", 0, 10, 0, 1)
@@ -1564,6 +1877,11 @@ local Rounding = Access_add("Rounding", "CustScope", Main.Tabs.Scope:slider("Rou
 Main.Items.no_fall_damage = Main.Tabs.Misc:switch('No Fall Damage')
 Main.Items.fix_nade = Main.Tabs.Misc:switch('fix nade')
 Main.Items.fastladder = Main.Tabs.Misc:switch('fast ladder')
+Main.Items.Clantag = Main.Tabs.Misc:switch('Clan Tag')
+Main.Items.Clantag_Tag = Main.Tabs.Misc:combo('Tag', {
+    "Mango",
+    "gamesense"
+})
 
 Main.Items.Aspect_Ratio = Main.Tabs.Misc:slider("Aspect Ratio", 0, 60, 0, 1)
 
@@ -1578,6 +1896,11 @@ local function fix_nade()
     if string.match(wpn, "Grenade") then
         rage.exploit:allow_defensive(false)
     end
+end
+
+local function fix_fakeduck()
+    if not ui.find("Aimbot", "Anti Aim", "Misc", "Fake Duck"):get() then return end
+    ui.find("Aimbot", "Anti Aim", "Fake Lag", "Limit"):override(14)
 end
 
 local function no_fall_damage(cmd)
@@ -1616,6 +1939,94 @@ local function fastladder(cmd)
     end
 end
 
+local Gamesense_tag = {
+    [1] = function() return "gamesense" end,
+    [2] = function() return "amesense " end,
+    [3] = function() return "mesense  " end,
+	[4] = function() return "esense   " end,
+	[5] = function() return "sense    " end,
+	[6] = function() return "ense     " end,
+	[7] = function() return "nse      " end,
+	[8] = function() return "se       " end,
+	[9] = function() return "e        " end,
+	[10] = function() return "         " end,
+	[11] = function() return "        g" end,
+	[12] = function() return "       ga" end,
+	[13] = function() return "      gam" end,
+	[14] = function() return "     game" end,
+	[15] = function() return "    games" end,
+	[16] = function() return "   gamese" end,
+	[17] = function() return "  gamesen" end,
+	[18] = function() return " gamesens" end,
+	[19] = function() return "gamesense" end,
+	[20] = function() return "gamesense" end,
+	[21] = function() return "gamesense" end,
+	[22] = function() return "gamesense" end,
+	[23] = function() return "gamesense" end,
+	[24] = function() return "gamesense" end,
+	[25] = function() return "gamesense" end,
+	[26] = function() return "gamesense" end,
+	[27] = function() return "gamesense" end,
+	[28] = function() return "gamesense" end
+}
+
+local Mango_tag = {
+    [1] = function() return "Mango" end,
+    [2] = function() return "ango " end,
+    [3] = function() return "ngo  " end,
+	[4] = function() return "go   " end,
+	[5] = function() return "o    " end,
+	[6] = function() return "         " end,
+	[10] = function() return "    M" end,
+	[11] = function() return "   Ma" end,
+	[12] = function() return "  Man" end,
+	[13] = function() return " Mang" end,
+	[14] = function() return "Mango" end,
+}
+
+local timing_switch = 20
+
+local frametime = 0
+local fps = 0
+local cur_mode = 0
+local timing = timing_switch
+
+local function hk_create_move(cmd)
+    timing = timing + 1
+end
+
+local function Clan_tag(cmd)
+    if entity.get_local_player() == nil then return end
+    if not Main.Items.Clantag:get() then return end
+
+    frametime = 0.9 * frametime + (1.0 - 0.9) * frametime
+    fps = math.floor((1.0 / frametime) + 0.5)
+    
+    if timing >= timing_switch then
+        cur_mode = cur_mode + 1
+        if Main.Items.Clantag_Tag:get() == "gamesense" then
+            if cur_mode > #Gamesense_tag then
+                cur_mode = 1
+            end
+            
+            common.set_clan_tag(Gamesense_tag[cur_mode]())
+            timing = 0
+        elseif Main.Items.Clantag_Tag:get() == "Mango" then
+            if cur_mode > #Mango_tag then
+                cur_mode = 1
+            end
+            
+            common.set_clan_tag(Mango_tag[cur_mode]())
+            timing = 0
+        end
+    end
+    
+end
+
+Main.Items.Clantag:set_callback(function()
+    common.set_clan_tag("")
+end)
+
 Main.Items.Support_Me = Main.Tabs.KillSay:switch('Support Me')
 Main.Items.n1_one = Main.Tabs.KillSay:switch('1') -- Custom on kill
 Main.Items.Custom_Kill = Main.Tabs.KillSay:switch('Custom on kill')
@@ -1627,7 +2038,7 @@ local Inp3 = Access_add("Inp3", "CustKillsay", Main.Tabs.KillSay:input("Inp 3", 
 local Support_Table = {
     "Howdy %s get good get neverlose.cc/market/item?id=LMaW6X",
     "dang should have gotten "..Main.script_db.lua_name.."!",
-    "neverlose.cc/market/item?id=LMaW6X your welcome"
+    "Cum in my baby making chamber and fill me up!"
 }
 
 local n1_table = {
@@ -1762,9 +2173,14 @@ local function Watermark(cmd)
         return
     end
 
-    wait(30, "canShowText", function()
-        canShowText = true
-    end)
+    wait({
+        time = 30,
+        flag = "canShowText",
+        Number = 0.1,
+        callback = function()
+            canShowText = true
+        end
+    })
 
     -- Continue with rendering
     local pos = { x = render.screen_size().x - Main.animation_state.currentWidth - 10, y = 10, w = Main.animation_state.currentWidth, h = 16 }
@@ -1859,72 +2275,72 @@ local function Randomize_DT_Ticks(cmd)
     ui.find("Aimbot", "Ragebot", "Main", "Double Tap", "Fake Lag Limit"):override(math.random(Main.Items.Min:get(), Main.Items.Max:get()))
 end
 
-local function defensive_aa(cmd)
-    -- if ui.find("Scripts", "Flux Yaw", "🔰 Anti-Aim", "Main", "Freestanding"):get() then return end
-    local exploit_state = rage.exploit:get() -- Defensive need always lag
+-- local function defensive_aa(cmd)
+--     -- if ui.find("Scripts", "Flux Yaw", "🔰 Anti-Aim", "Main", "Freestanding"):get() then return end
+--     local exploit_state = rage.exploit:get() -- Defensive need always lag
     
-    local localplayer = entity.get_local_player()
-    if not localplayer then return end
+--     local localplayer = entity.get_local_player()
+--     if not localplayer then return end
 
-    local pitch_settings = pitch_settings:get()
-    local yaw_settings = yaw_settings:get()
-    local Spin_Speed = SpinSpeed:get()
+--     local pitch_settings = pitch_settings:get()
+--     local yaw_settings = yaw_settings:get()
+--     local Spin_Speed = SpinSpeed:get()
     
-    if (Main.Items.Defensive:get()) then
-        -- ui.find("Aimbot", "Anti Aim", "Angles", "Pitch"):override("Disabled")
-        local prop = localplayer["m_fFlags"]
-        local pitch_override = 0
-        local yaw_override = 0
+--     if (Main.Items.Defensive:get()) then
+--         -- ui.find("Aimbot", "Anti Aim", "Angles", "Pitch"):override("Disabled")
+--         local prop = localplayer["m_fFlags"]
+--         local pitch_override = 0
+--         local yaw_override = 0
         
-        if pitch_settings == "Zero" then
-            pitch_override = 0
-        elseif pitch_settings == "Up" then
-            pitch_override = -89
-        elseif pitch_settings == "Down" then
-            pitch_override = 89
-        elseif pitch_settings == "Random" then
-            pitch_override = math.random(-89,89)
-        elseif pitch_settings == "Jitter" then
-            if (math.floor(globals.curtime * 100000) % 2) == 0 then
-                pitch_override = 89
-            else
-                pitch_override = -89
-            end
-        elseif pitch_settings == "45 Deg" then
-            if (math.floor(globals.curtime * 10000) % 2) == 0 then
-                pitch_override = 45
-            else
-                pitch_override = -45
-            end
-        end
-        if yaw_settings == "Static" then
-            yaw_override = 0
-        elseif yaw_settings == "Random" then
-            yaw_override = math.random(-179,179)
-        elseif yaw_settings == "Side-Way" then
-            if (math.floor(globals.curtime * 100000) % 2) == 0 then
-                yaw_override = 89
-            else
-                yaw_override = -90
-            end
-        elseif yaw_settings == "Spin" then
-            yaw_override = (globals.curtime * Spin_Speed) % 360 - 180
-        end
+--         if pitch_settings == "Zero" then
+--             pitch_override = 0
+--         elseif pitch_settings == "Up" then
+--             pitch_override = -89
+--         elseif pitch_settings == "Down" then
+--             pitch_override = 89
+--         elseif pitch_settings == "Random" then
+--             pitch_override = math.random(-89,89)
+--         elseif pitch_settings == "Jitter" then
+--             if (math.floor(globals.curtime * 100000) % 2) == 0 then
+--                 pitch_override = 89
+--             else
+--                 pitch_override = -89
+--             end
+--         elseif pitch_settings == "45 Deg" then
+--             if (math.floor(globals.curtime * 10000) % 2) == 0 then
+--                 pitch_override = 45
+--             else
+--                 pitch_override = -45
+--             end
+--         end
+--         if yaw_settings == "Static" then
+--             yaw_override = 0
+--         elseif yaw_settings == "Random" then
+--             yaw_override = math.random(-179,179)
+--         elseif yaw_settings == "Side-Way" then
+--             if (math.floor(globals.curtime * 100000) % 2) == 0 then
+--                 yaw_override = 89
+--             else
+--                 yaw_override = -90
+--             end
+--         elseif yaw_settings == "Spin" then
+--             yaw_override = (globals.curtime * Spin_Speed) % 360 - 180
+--         end
         
-        if exploit_state ~= 0 then -- GetSelectedWeapons(csgo_weapons(localplayer:get_player_weapon()).name, menu.Standing_Weapons)
-            rage.antiaim:override_hidden_pitch(pitch_override)
-            rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Main.Main_Anti_Defensive.main.lag_options:override("Always On")
-            rage.exploit:allow_defensive(true)
-        end
-    else
-        -- ui.find("Aimbot", "Anti Aim", "Angles", "Pitch"):override()
-        Main.Main_Anti_Defensive.main.hidden:override()
-        Main.Main_Anti_Defensive.main.fs:override()
-        Main.Main_Anti_Defensive.main.lag_options:override()
-        rage.exploit:allow_defensive(false)
-    end
-end
+--         if exploit_state ~= 0 then -- GetSelectedWeapons(csgo_weapons(localplayer:get_player_weapon()).name, menu.Standing_Weapons)
+--             rage.antiaim:override_hidden_pitch(pitch_override)
+--             rage.antiaim:override_hidden_yaw_offset(yaw_override)
+--             Main.Main_Anti_Defensive.main.lag_options:override("Always On")
+--             rage.exploit:allow_defensive(true)
+--         end
+--     else
+--         -- ui.find("Aimbot", "Anti Aim", "Angles", "Pitch"):override()
+--         Main.Main_Anti_Defensive.main.hidden:override()
+--         Main.Main_Anti_Defensive.main.fs:override()
+--         Main.Main_Anti_Defensive.main.lag_options:override()
+--         rage.exploit:allow_defensive(false)
+--     end
+-- end
 
 
 
@@ -2033,14 +2449,32 @@ local function draw_scope_lines()
 end
 
 
+if not _G.Sesion_Time then
+    _G.Sesion_Time = 0
+end
 
 Setup_welcome:label("Welcome, "..Main.helpers.RGBToColorString(Main.script_db.username, color(130, 95, 208, 255)).. "!") --\aA9ACFFFF
 Setup_welcome:label(Main.script_db.lua_name.." "..Main.helpers.RGBToColorString(Main.script_db.lua_version, color(130, 95, 208, 255)).. " Live Build")
-local DDS = Setup_welcome:button("       Discord       ")
+local SesionTime = Setup_welcome:label("Session Time: ".._G.Sesion_Time.. " ")
 
-DDS:set_callback(function()
-    clipboard.set("https://discord.gg/qq6WgyMwkw")
-end, false)
+local function Update_SesionTime()
+    wait({
+        time=1,
+        flag="SesionTime",
+        Number=0.008,
+        callback = function()
+            _G.Sesion_Time = _G.Sesion_Time + 1
+            SesionTime:name("Sesion Time: ".._G.Sesion_Time.. " ")
+        end
+    })
+
+end
+
+-- local DDS = Setup_welcome:button("       Discord       ")
+
+-- DDS:set_callback(function()
+--     clipboard.set("https://discord.gg/qq6WgyMwkw")
+-- end, false)
 
 
 local Reloade_Script = Setup_welcome:button("                 Force Full Update                 ")
@@ -2294,11 +2728,14 @@ end
 function Main_CM(cmd)
     no_fall_damage(cmd)
     Randomize_DT_Ticks(cmd)
-    defensive_aa(cmd)
+    -- defensive_aa(cmd)
     Visuals_Createmove()
     fastladder(cmd)
     fix_nade()
     AntiAim_createmove(cmd)
+    fix_fakeduck()
+    -- hk_create_move(cmd)
+    -- frametime = globals.frametime
     cvar.r_aspectratio:float(Main.Items.Aspect_Ratio:get() / 10)
 end
 
@@ -2308,7 +2745,8 @@ function Main_Render(cmd)
     draw_scope_lines()
     Visibility_easy()
     Visuals_Indicator()
-
+    Update_SesionTime()
+    -- Clan_tag()
 end
 
 
@@ -2324,3 +2762,4 @@ end)
 events.aim_ack:set(function(e)
     KillSay(e)
 end)
+
