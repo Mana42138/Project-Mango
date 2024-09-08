@@ -17,7 +17,7 @@ function Main:ClampedSpeed(speed, debug)
 	end
 end
 
-function Main:Clamp(val, min, max) 
+function Main:clamp(val, min, max) 
     if val > max then
         return max
     end
