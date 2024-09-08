@@ -17,6 +17,18 @@ function Main:ClampedSpeed(speed, debug)
 	end
 end
 
+function Main:Clamp(val, min, max) 
+    if val > max then
+        return max
+    end
+
+    if val < min then
+        return min
+    end
+
+    return val
+end
+
 function Main:linear(t, b, c, d)
 	return c * t / d + b
 end
