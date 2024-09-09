@@ -1,7 +1,7 @@
-local Module = {}
+local Main = {}
 local b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
-function Module:encode(input)
+function Main:encode(input)
     local result = {}
     local pad = 2 - ((#input - 1) % 3)
     input = input .. string.rep('\0', pad)
@@ -21,7 +21,7 @@ function Module:encode(input)
     return table.concat(result)
 end
 
-function Module:decode(input)
+function Main:decode(input)
     input = input:gsub('=', ''):gsub('[^'..b64chars..']', '')
     local result = {}
     
@@ -39,4 +39,4 @@ function Module:decode(input)
     return table.concat(result):gsub('%z+$', '')
 end
 
-return Module
+return Main
