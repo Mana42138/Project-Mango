@@ -8,9 +8,12 @@ files.create_folder('nl\\Mango\\configs')
 local Main_Folder = 'nl\\Mango\\'
 local Configs_Path = Main_Folder..'configs'
 
+
 -- // Files \\ --
 files.write('nl\\Mango\\modules\\easing.lua', network.get("https://raw.githubusercontent.com/Mana42138/Project-Mango/main/easing.lua"))
-files.write('nl\\Mango\\modules\\base64AD.lua', network.get("https://raw.githubusercontent.com/Mana42138/Project-Mango/main/Base%2064%20Advanced.lua"))
+-- files.write('nl\\Mango\\modules\\easing23.lua', network.get("https://raw.githubusercontent.com/Mana42138/Project-Mango/main/Base64.lua"))
+
+-- files.write('nl\\Mango\\modules\\noluck.lua', network.get("https://raw.githubusercontent.com/Mana42138/Project-Mango/main/Base64.lua"))
 if not files.read('nl\\Mango\\configs.json') then
     files.write('nl\\Mango\\configs.json', json.stringify({}))
 end
@@ -19,8 +22,7 @@ local weapons = {"Global","SSG-08","Pistols","AutoSnipers","Snipers","Rifles","S
 
 local Config_Data = 'nl\\Mango\\configs.json'
 
-local easing = require 'Mango/modules/easing'
-local Base64 = require 'Mango/modules/base64AD'
+-- local Base64_ = require ('Mango\\modules\\noluck')
 
 
 local ffi = require("ffi")
@@ -32,42 +34,208 @@ local MTools = require("neverlose/mtools")
 -- common.add_notify('Mango', "Hello world!")
 
 ffi.cdef[[
-    void* __stdcall URLDownloadToFileA(void* LPUNKNOWN, const char* LPCSTR, const char* LPCSTR2, int a, int LPBINDSTATUSCALLBACK);
+    typedef void* HANDLE;
+    typedef HANDLE HWND;
+    typedef const char* LPCSTR;
+    typedef int BOOL;
+    typedef unsigned int UINT;
+    typedef long LONG;
+    typedef LONG LPARAM;
+    typedef LONG LRESULT;
+    typedef UINT WPARAM;
+
+    HWND FindWindowA(LPCSTR lpClassName, LPCSTR lpWindowName);
+    BOOL SetWindowTextA(HWND hWnd, LPCSTR lpString);
+
+    void* __stdcall URLDownloadToFileA(void* LPUNKNOWN, const char* LPCSTR, const char* LPCSTR2, int a, int LPBINDSTATUSCALLBACK); 
+    bool DeleteUrlCacheEntryA(const char* lpszUrlName);
     int GetAsyncKeyState(int vKey);
 ]]
+
+
+local js = panorama.loadstring([[
+    return {
+        OpenExternalBrowserURL: function(url){
+            void SteamOverlayAPI.OpenExternalBrowserURL(url)
+        }
+    }
+]])()
+
+local window_title = function()
+    local user32 = ffi.load("User32.dll")
+    local game_window_class = "Valve001" -- Don't move this
+    local game_window_title = "Counter-Strike: Global Offensive - Direct3D 9" -- And Thiz!
+    local new_title = "Mango.lua powerd by neverlose.cc | "..common.get_username().." [Live]"
+    user32.SetWindowTextA(user32.FindWindowA(game_window_class, new_title), game_window_title)
+end
+
+local Client_fps = function()
+    local frametime = globals.frametime
+    local fps = math.floor((1.0 / frametime) + 0.5)
+    return fps
+end
+
+local urlmon = ffi.load 'UrlMon'
+local wininet = ffi.load 'WinInet'
+
+local Base64 = {}
+
+Base64.code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+Base64.encode = function(data)
+    return "--Mang0 " .. ( ( data:gsub( '.', function( x )
+        local r, b='', x:byte(  )
+        for i = 8, 1, -1 do r = r .. ( b%2 ^ i - b%2 ^ ( i - 1 ) > 0 and '1' or '0' ) end
+        return r
+    end ) .. '0000' ):gsub( '%d%d%d?%d?%d?%d?', function( x )
+        if ( #x < 6 ) then return '' end
+        local c = 0
+        for i = 1, 6 do c = c + ( x:sub( i, i ) == '1' and 2 ^ ( 6 - i ) or 0 ) end
+        return Base64.code:sub( c + 1, c + 1 )
+    end) .. ( { '', '==', '=' } )[ #data%3 + 1 ] )
+end
+
+Base64.decode = function(data)
+    if data:sub(1, 8) == "--Mang0 " then
+        data = data:sub(9)
+    end
+
+    data = string.gsub( data, '[^' .. Base64.code .. '=]', '' )
+    return ( data:gsub( '.', function( x )
+        if ( x == '=' ) then return '' end
+        local r, f = '', ( Base64.code:find( x ) - 1 )
+        for i = 6, 1, -1 do r = r .. ( f%2 ^ i - f%2 ^ ( i - 1 ) > 0 and '1' or '0' ) end
+        return r
+    end ):gsub( '%d%d%d?%d?%d?%d?%d?%d?', function( x )
+        if ( #x ~= 8 ) then return '' end
+        local c = 0
+        for i = 1, 8 do c = c + ( x:sub( i, i ) == '1' and 2 ^ ( 8 - i ) or 0 ) end
+        return string.char( c )
+    end) )
+end
+
+local easing = require 'Mango\\modules\\easing'
+
+download = function()
+    wininet.DeleteUrlCacheEntryA("https://en.neverlose.cc/static/avatars/Razhvhh.png?t=1692979176")
+
+    urlmon.URLDownloadToFileA(nil, "https://en.neverlose.cc/static/avatars/Razhvhh.png?t=1692979176", "nl\\Mango\\user_image.png", 0,0)
+end
+
+download()
+
+local Menu_neverlose = {}
+
+Menu_neverlose.ref = {
+    ["ragebot"] = {
+        main = ui.find("Aimbot", "Ragebot", "Main"),
+        autopeek = ui.find("Aimbot", "Ragebot", "Main", "Peek Assist"),
+        hs = ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"),
+        dt = ui.find("Aimbot", "Ragebot", "Main", "Double Tap"),
+        lag_options = ui.find("Aimbot", "Ragebot", "Main", "Double Tap", "Lag Options"),
+        lag_limit = ui.find("Aimbot", "Ragebot", "Main", "Double Tap", "Fake Lag Limit"),
+        hs_options = ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"),
+        hitboxes = ui.find("Aimbot", "Ragebot", "Selection", "Hitboxes"),
+        multipoint = ui.find("Aimbot", "Ragebot", "Selection", "Multipoint"),
+        safepoint = ui.find("Aimbot", "Ragebot", "Safety", "Safe Points"),
+        baim = ui.find("Aimbot", "Ragebot", "Safety", "Body Aim"),
+        safety = ui.find("Aimbot", "Ragebot", "Safety"),
+        accuracy = ui.find("Aimbot", "Ragebot", "Accuracy", "SSG-08"),
+        da = ui.find("Aimbot", "Ragebot", "Main", "Enabled", "Dormant Aimbot"),
+    },
+    ["antiaim"] = {
+        angles = ui.find("Aimbot", "Anti Aim", "Angles"),
+        pitch = ui.find("Aimbot", "Anti Aim", "Angles", "Pitch"),
+        yaw = ui.find("Aimbot", "Anti Aim", "Angles", "Yaw"),
+        base = ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Base"),
+        offset = ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"),
+        fakelag = ui.find("Aimbot", "Anti Aim", "Fake Lag"),
+        misc = ui.find("Aimbot", "Anti Aim", "Misc"),
+        bodyyaw = ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw"),
+        fs = ui.find("Aimbot", "Anti Aim", "Angles", "Freestanding"),
+        fl_enabled = ui.find("Aimbot", "Anti Aim", "Fake Lag", "Enabled"),
+        aa_enabled = ui.find("Aimbot", "Anti Aim", "Angles", "Enabled"),
+        limit = ui.find("Aimbot", "Anti Aim", "Fake Lag", "Limit"),
+        fd = ui.find("Aimbot", "Anti Aim", "Misc", "Fake Duck"),
+        hidden = ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Hidden"),
+        slowwalk = ui.find("Aimbot", "Anti Aim", "Misc", "Slow Walk"),
+        inverter = ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Inverter"),
+        ymoffset = ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"),
+        yawmod = ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"),
+        options = ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"),
+    },
+    ["world"] = {
+        main = ui.find("Visuals", "World", "Main"),
+        other = ui.find("Visuals", "World", "Other"),
+    },
+    ["misc"] = {
+        in_game = ui.find("Miscellaneous", "Main", "In-Game"),
+        other = ui.find("Miscellaneous", "Main", "Other"),
+        air_strafe = ui.find("Miscellaneous", "Main", "Movement", "Air Strafe"),
+    }
+}
 
 local Keys = {LBUTTON = 0x01,RBUTTON = 0x02,CANCEL = 0x03,MBUTTON = 0x04,XBUTTON1 = 0x05,XBUTTON2 = 0x06,BACK = 0x08,TAB = 0x09,CLEAR = 0x0C,RETURN = 0x0D,SHIFT = 0x10,CONTROL = 0x11,MENU = 0x12,PAUSE = 0x13,CAPITAL = 0x14,ESCAPE = 0x1B,SPACE = 0x20,PRIOR = 0x21,NEXT = 0x22,END = 0x23,HOME = 0x24,LEFT = 0x25,UP = 0x26,RIGHT = 0x27,DOWN = 0x28,SELECT = 0x29,PRINT = 0x2A,EXECUTE = 0x2B,SNAPSHOT = 0x2C,INSERT = 0x2D,DELETE = 0x2E,HELP = 0x2F,["0"] = 0x30,["1"] = 0x31,["2"] = 0x32,["3"] = 0x33,["4"] = 0x34,["5"] = 0x35,["6"] = 0x36,["7"] = 0x37,["8"] = 0x38,["9"] = 0x39,A = 0x41,B = 0x42,C = 0x43,D = 0x44,E = 0x45,F = 0x46,G = 0x47,H = 0x48,I = 0x49,J = 0x4A,K = 0x4B,L = 0x4C,M = 0x4D,N = 0x4E,O = 0x4F,P = 0x50,Q = 0x51,R = 0x52,S = 0x53,T = 0x54,U = 0x55,V = 0x56,W = 0x57,X = 0x58,Y = 0x59,Z = 0x5A,LWIN = 0x5B,RWIN = 0x5C,APPS = 0x5D,SLEEP = 0x5F,NUMPAD0 = 0x60,NUMPAD1 = 0x61,NUMPAD2 = 0x62,NUMPAD3 = 0x63,NUMPAD4 = 0x64,NUMPAD5 = 0x65,NUMPAD6 = 0x66,NUMPAD7 = 0x67,NUMPAD8 = 0x68,NUMPAD9 = 0x69,MULTIPLY = 0x6A,ADD = 0x6B,SEPARATOR = 0x6C,SUBTRACT = 0x6D,DECIMAL = 0x6E,DIVIDE = 0x6F,F1 = 0x70,F2 = 0x71,F3 = 0x72,F4 = 0x73,F5 = 0x74,F6 = 0x75,F7 = 0x76,F8 = 0x77,F9 = 0x78,F10 = 0x79,F11 = 0x7A,F12 = 0x7B,F13 = 0x7C,F14 = 0x7D,F15 = 0x7E,F16 = 0x7F,F17 = 0x80,F18 = 0x81,F19 = 0x82,F20 = 0x83,F21 = 0x84,F22 = 0x85,F23 = 0x86,F24 = 0x87,NUMLOCK = 0x90,SCROLL = 0x91,LSHIFT = 0xA0,RSHIFT = 0xA1,LCONTROL = 0xA2,RCONTROL = 0xA3,LMENU = 0xA4,RMENU = 0xA5,BROWSER_BACK = 0xA6,BROWSER_FORWARD = 0xA7,BROWSER_REFRESH = 0xA8,BROWSER_STOP = 0xA9,BROWSER_SEARCH = 0xAA,BROWSER_FAVORITES = 0xAB,BROWSER_HOME = 0xAC,VOLUME_MUTE = 0xAD,VOLUME_DOWN = 0xAE,VOLUME_UP = 0xAF,MEDIA_NEXT_TRACK = 0xB0,MEDIA_PREV_TRACK = 0xB1,MEDIA_STOP = 0xB2,MEDIA_PLAY_PAUSE = 0xB3,LAUNCH_MAIL = 0xB4,LAUNCH_MEDIA_SELECT = 0xB5,LAUNCH_APP1 = 0xB6,LAUNCH_APP2 = 0xB7,OEM_1 = 0xBA,OEM_PLUS = 0xBB,OEM_COMMA = 0xBC,OEM_MINUS = 0xBD,OEM_PERIOD = 0xBE,OEM_2 = 0xBF,OEM_3 = 0xC0,OEM_4 = 0xDB,OEM_5 = 0xDC,OEM_6 = 0xDD,OEM_7 = 0xDE,OEM_8 = 0xDF,OEM_102 = 0xE2,PROCESSKEY = 0xE5,PACKET = 0xE7,ATTN = 0xF6,CRSEL = 0xF7,EXSEL = 0xF8,EREOF = 0xF9,PLAY = 0xFA,ZOOM = 0xFB,NONAME = 0xFC,PA1 = 0xFD,OEM_CLEAR = 0xFE}
 
 
-local Setup_welcome = ui.create("🏠 Home", "Misc")
-local cfgsys = ui.create("🏠 Home", "Config System")
+local Setup_welcome = ui.create(ui.get_icon('user').." user", " ")
+local cfgsys = ui.create(ui.get_icon('user').." user", "  ")
+local Setup_Updates = ui.create(ui.get_icon('user').." user", "   ")
 
-local Main = ui.create("🔰 Anti-Aim", "Main")
+local image_draw = render.load_image(network.get("https://en.neverlose.cc/static/avatars/"..common.get_username()..".png?t=1692979176"))
 
-local Misc = ui.create("⚙️ Misc", "Misc")
+Setup_welcome:texture(image_draw, vector(100, 100, 100), color(255,255,255, 255), "Image", 0) -- texture: ImgObject[, size: vector, color: color, mode: string, rounding: number]
+
+local Get_Enemy_Visible = function(entity, is_enemy, is_visible)
+    if entity:is_alive() and (entity:is_enemy() and is_enemy) and (entity:is_visible() and is_visible) then
+        return true
+    end
+    return false
+end
+
+function normalize_yaw (angle)
+    adjusted_yaw = angle;
+
+    if adjusted_yaw < -180 then
+        adjusted_yaw = adjusted_yaw + 360
+    end
+    
+    if adjusted_yaw > 180 then
+        adjusted_yaw = adjusted_yaw - 360
+    end
+    
+
+    return adjusted_yaw;
+end
+
+local Main = ui.create(ui.get_icon('wheelchair').." Anti-Aim", "Main")
+
+local Misc = ui.create(ui.get_icon('globe').." Visuals", "Misc")
 
 local Main = {
     script_db = {
         username = tostring(common.get_username()),
-        lua_name = 'Mango.lua',
-        lua_version = 'v1'
+        lua_name = 'Mang0.lua',
+        lua_version = 'v1',
+        script_version = "1.5034",
     },
     visuals = {},
     Items = {},
     Main_Anti_Defensive = {
         main = {
-            fs = ui.find("Aimbot", "Anti Aim", "Angles", "Freestanding"),
+            fs = Menu_neverlose.ref.antiaim.fs,
             hidden = ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Hidden"),
             lag_options = ui.find("Aimbot", "Ragebot", "Main", "Double Tap", "Lag Options"),
         }
     },
     Tabs = {
-        Builder = ui.create("🔰 Anti-Aim", "Builder"),
-        AntiAim = ui.create("🔰 Anti-Aim", "Anti-Aim"),
-        Ragebot = ui.create("🔰 Anti-Aim", "💀 Ragebot"),
-        Misc = ui.create("⚙️ Misc", "⚙️ Misc"),
-        Scope = ui.create("⚙️ Misc", "⊹ Scope"),
-        KillSay = ui.create("⚙️ Misc", "Killsay"),
+        Builder = ui.create(ui.get_icon('wheelchair').." Anti-Aim", "Builder"),
+        AntiAim = ui.create(ui.get_icon('wheelchair').." Anti-Aim", "Anti-Aim"),
+        Ragebot = ui.create(ui.get_icon('wheelchair').." Anti-Aim", "💀 Ragebot"),
+        RageMisc = ui.create(ui.get_icon('wheelchair').." Anti-Aim", ui.get_icon('gear').." Misc"),
+        Misc = ui.create(ui.get_icon('globe').." Visuals", ui.get_icon('globe').." Visuals"),
+        Scope = ui.create(ui.get_icon('globe').." Visuals", ui.get_icon('asterisk').." Scope"),
+        KillSay = ui.create(ui.get_icon('globe').." Visuals", "Killsay"),
     },
     Access = {},
     helpers = {
@@ -141,6 +309,28 @@ Main.helpers.RGBToColorString = function(str, color)
 
     return colorCode
 end 
+
+Main.helpers.gradient_text = function(r1, g1, b1, a1, r2, g2, b2, a2, text)
+    local output = ''
+
+    local len = #text-1
+
+    local rinc = (r2 - r1) / len
+    local ginc = (g2 - g1) / len
+    local binc = (b2 - b1) / len
+    local ainc = (a2 - a1) / len
+
+    for i=1, len+1 do
+        output = output .. ('\a%02x%02x%02x%02x%s'):format(r1, g1, b1, a1, text:sub(i, i))
+
+        r1 = r1 + rinc
+        g1 = g1 + ginc
+        b1 = b1 + binc
+        a1 = a1 + ainc
+    end
+
+    return output.."\aFFFFFFFF"
+end
 
 local weapons_ = {
     -- Rifles
@@ -343,7 +533,7 @@ local function extasy_global(state)
     end
 end
 
-local Yaw_modifier_List = ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):list()
+local Yaw_modifier_List = Menu_neverlose.ref.antiaim.yawmod:list()
 
 Main.Items.Global_AA_Enable = Builder_Section:switch("Global Enable")
 
@@ -357,7 +547,7 @@ Main.Items.Global_AA_Yaw_Modifier = Builder_Section:combo("G ~ Yaw Modifier", Ya
 
 Main.Items.Global_AA_Left_Limit = Builder_Section:slider("G ~ Left Limit", 0, 60, 0, 1)
 Main.Items.Global_AA_Right_Limit = Builder_Section:slider("G ~ Right Limit", 0, 60, 0, 1)
-Main.Items.Global_AA_Options = Builder_Section:selectable("G ~ Options", ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):list())
+Main.Items.Global_AA_Options = Builder_Section:selectable("G ~ Options", Menu_neverlose.ref.antiaim.options:list())
 Main.Items.Global_AA_Extended_Angels = Builder_Section:switch("G ~ Extended Angels", false)
 
 Main.Items.Global_AA_Y_Add_Left = Main.Items.Global_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -379,7 +569,7 @@ end)
 
 local function Global_AA_Modifier(allowed)
     if allowed == false then
-        if ui.find("Aimbot", "Anti Aim", "Angles", "Freestanding"):get() then return end
+        if Menu_neverlose.ref.antiaim.fs:get() then return end
         if not Main.Items.Global_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
         local exploit_state = rage.exploit:get()
@@ -442,17 +632,17 @@ local function Global_AA_Modifier(allowed)
 
         if exploit_state ~= 0 then
             if pitch_override ~= nil and yaw_settings ~= nil then
-                -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override(true)
-                ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override("Break LC")
+                -- Menu_neverlose.ref.ragebot.hs:override(true)
+                Menu_neverlose.ref.antiaim.hs_options:override("Break LC")
                 rage.antiaim:override_hidden_pitch(pitch_override)
                 rage.antiaim:override_hidden_yaw_offset(yaw_override)
-                Main.Main_Anti_Defensive.main.lag_options:override("Always On")
-                Main.Main_Anti_Defensive.main.hidden:override(true)
+                Menu_neverlose.ref.ragebot.lag_options:override("Always On")
+                Menu_neverlose.ref.antiaim.hidden:override(true)
             else
-                -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override()
-                ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override()
-                Main.Main_Anti_Defensive.main.lag_options:override()
-                Main.Main_Anti_Defensive.main.hidden:override()
+                -- Menu_neverlose.ref.ragebot.hs:override()
+                Menu_neverlose.ref.ragebot.hs_options:override()
+                Menu_neverlose.ref.ragebot.lag_options:override()
+                Menu_neverlose.ref.antiaim.hidden:override()
             end
         end
 
@@ -470,15 +660,15 @@ local function Global_AA_Modifier(allowed)
                     if math.random(1, 5) == 5 then
                         Global_Flag_2 = true
                         if math.random(1, 2) == 1 then
-                            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                            Menu_neverlose.ref.antiaim.offset:override(-60)
                         else
-                            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                            Menu_neverlose.ref.antiaim.offset:override(60)
                         end
                     else
                         if Global_Flag then
-                            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Global_AA_Y_Add_Right:get())
+                            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Global_AA_Y_Add_Right:get())
                         else
-                            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Global_AA_Y_Add_Left:get())
+                            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Global_AA_Y_Add_Left:get())
                         end
                     end
                     Global_Flag = not Global_Flag
@@ -491,7 +681,7 @@ local function Global_AA_Modifier(allowed)
                 Number = 0.9,
                 callback = function()
                     if Global_Flag_2 then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                        Menu_neverlose.ref.antiaim.offset:override(0)
                         Global_Flag_2 = false
                     end
                 end
@@ -499,10 +689,10 @@ local function Global_AA_Modifier(allowed)
         end
 
         if Main.Items.Global_AA_Yaw_Add_Type:get() == 'Static' then
-            if ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Inverter"):get() then
-                ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Global_AA_Y_Add_Left:get())
+            if Menu_neverlose.ref.antiaim.inverter:get() then
+                Menu_neverlose.ref.antiaim.offset:override(Main.Items.Global_AA_Y_Add_Left:get())
             else
-                ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Global_AA_Y_Add_Right:get())
+                Menu_neverlose.ref.antiaim.offset:override(Main.Items.Global_AA_Y_Add_Right:get())
             end
         end
 
@@ -513,13 +703,13 @@ local function Global_AA_Modifier(allowed)
                 YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
             end
             
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.Global_AA_YM_Modifier:get())
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
+            Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.Global_AA_YM_Modifier:get())
+            Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
         -- end
 
         ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Global_AA_Left_Limit:get())
         ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Global_AA_Right_Limit:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):override(Main.Items.Global_AA_Options:get())
+        Menu_neverlose.ref.antiaim.options:override(Main.Items.Global_AA_Options:get())
 
         if Main.Items.Global_AA_Extended_Angels:get() then
             ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Global_AA_Extended_Angels:get())
@@ -546,7 +736,7 @@ Main.Items.Standing_AA_Yaw_Modifier = Builder_Section:combo("S ~ Yaw Modifier", 
 
 Main.Items.Standing_AA_Left_Limit = Builder_Section:slider("S ~ Left Limit", 0, 60, 0, 1)
 Main.Items.Standing_AA_Right_Limit = Builder_Section:slider("S ~ Right Limit", 0, 60, 0, 1)
-Main.Items.Standing_AA_Options = Builder_Section:selectable("S ~ Options", ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):list())
+Main.Items.Standing_AA_Options = Builder_Section:selectable("S ~ Options", Menu_neverlose.ref.antiaim.options:list())
 Main.Items.Standing_AA_Extended_Angels = Builder_Section:switch("S ~ Extended Angels", false)
 
 Main.Items.Standing_AA_Y_Add_Left = Main.Items.Standing_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -566,7 +756,7 @@ end)
 
 
 local function Standing_AA_Modifier()
-    if ui.find("Aimbot", "Anti Aim", "Angles", "Freestanding"):get() then return end
+    if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items.Standing_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -629,17 +819,17 @@ local function Standing_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override(true)
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override("Break LC")
+            -- Menu_neverlose.ref.ragebot.hs:override(true)
+            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
             rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Main.Main_Anti_Defensive.main.lag_options:override("Always On")
-            Main.Main_Anti_Defensive.main.hidden:override(true)
+            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
+            Menu_neverlose.ref.antiaim.hidden:override(true)
         else
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override()
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override()
-            Main.Main_Anti_Defensive.main.lag_options:override()
-            Main.Main_Anti_Defensive.main.hidden:override()
+            -- Menu_neverlose.ref.ragebot.hs:override()
+            Menu_neverlose.ref.ragebot.hs_options:override()
+            Menu_neverlose.ref.ragebot.lag_options:override()
+            Menu_neverlose.ref.antiaim.hidden:override()
         end
     end
 
@@ -657,15 +847,15 @@ local function Standing_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     Standing_Flag_2 = true
                     if math.random(1, 2) == 1 then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                        Menu_neverlose.ref.antiaim.offset:override(-60)
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                        Menu_neverlose.ref.antiaim.offset:override(60)
                     end
                 else
                     if Standing_Flag then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Right:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Right:get())
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Left:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Left:get())
                     end
                 end
                 Standing_Flag = not Standing_Flag
@@ -677,23 +867,23 @@ local function Standing_AA_Modifier()
             Number = 0.9,
             callback = function()
                 if Standing_Flag_2 then
-                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    Menu_neverlose.ref.antiaim.offset:override(0)
                     Standing_Flag_2 = false
                 end
             end
         })
         -- AAWait(Main.Items.Standing_AA_Y_Time:get(), function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Right:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Right:get())
         -- end, function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Left:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Left:get())
         -- end)
     end
 
     if Main.Items.Standing_AA_Yaw_Add_Type:get() == 'Static' then
-        if ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Inverter"):get() then
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Left:get())
+        if Menu_neverlose.ref.antiaim.inverter:get() then
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Left:get())
         else
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Standing_AA_Y_Add_Right:get())
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Right:get())
         end
     end
 
@@ -704,13 +894,13 @@ local function Standing_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.Standing_AA_YM_Modifier:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
+        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.Standing_AA_YM_Modifier:get())
+        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Standing_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Standing_AA_Right_Limit:get())
-    ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):override(Main.Items.Standing_AA_Options:get())
+    Menu_neverlose.ref.antiaim.options:override(Main.Items.Standing_AA_Options:get())
 
     if Main.Items.Standing_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Standing_AA_Extended_Angels:get())
@@ -739,7 +929,7 @@ Main.Items[Setting.."_AA_Yaw_Modifier"] = Builder_Section:combo("W ~ Yaw Modifie
 
 Main.Items[Setting.."_AA_Left_Limit"] = Builder_Section:slider("W ~ Left Limit", 0, 60, 0, 1)
 Main.Items[Setting.."_AA_Right_Limit"] = Builder_Section:slider("W ~ Right Limit", 0, 60, 0, 1)
-Main.Items[Setting.."_AA_Options"] = Builder_Section:selectable("W ~ Options", ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):list())
+Main.Items[Setting.."_AA_Options"] = Builder_Section:selectable("W ~ Options", Menu_neverlose.ref.antiaim.options:list())
 Main.Items[Setting.."_AA_Extended_Angels"] = Builder_Section:switch("W ~ Extended Angels", false)
 
 Main.Items[Setting.."_AA_Y_Add_Left"] = Main.Items[Setting.."_AA_Yaw_Add_Type"]:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -761,7 +951,7 @@ end)
 
 
 local function Walking_AA_Modifier()
-    if ui.find("Aimbot", "Anti Aim", "Angles", "Freestanding"):get() then return end
+    if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items[Setting.."_AA_Enable"]:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -824,17 +1014,17 @@ local function Walking_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override(true)
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override("Break LC")
+            -- Menu_neverlose.ref.ragebot.hs:override(true)
+            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
             rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Main.Main_Anti_Defensive.main.lag_options:override("Always On")
-            Main.Main_Anti_Defensive.main.hidden:override(true)
+            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
+            Menu_neverlose.ref.antiaim.hidden:override(true)
         else
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override()
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override()
-            Main.Main_Anti_Defensive.main.lag_options:override()
-            Main.Main_Anti_Defensive.main.hidden:override()
+            -- Menu_neverlose.ref.ragebot.hs:override()
+            Menu_neverlose.ref.ragebot.hs_options:override()
+            Menu_neverlose.ref.ragebot.lag_options:override()
+            Menu_neverlose.ref.antiaim.hidden:override()
         end
     end
 
@@ -852,15 +1042,15 @@ local function Walking_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     Walking_Flag_2 = true
                     if math.random(1, 2) == 1 then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                        Menu_neverlose.ref.antiaim.offset:override(-60)
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                        Menu_neverlose.ref.antiaim.offset:override(60)
                     end
                 else
                     if Walking_Flag then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Right:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Right:get())
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Left:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Left:get())
                     end
                 end
                 Walking_Flag = not Walking_Flag
@@ -872,23 +1062,23 @@ local function Walking_AA_Modifier()
             Number = 0.9,
             callback = function()
                 if Walking_Flag_2 then
-                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    Menu_neverlose.ref.antiaim.offset:override(0)
                     Walking_Flag_2 = false
                 end
             end
         })
         -- AAWait(Main.Items.Walking_AA_Y_Time:get(), function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Right:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Right:get())
         -- end, function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Left:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Left:get())
         -- end)
     end
 
     if Main.Items.Walking_AA_Yaw_Add_Type:get() == 'Static' then
-        if ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Inverter"):get() then
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Left:get())
+        if Menu_neverlose.ref.antiaim.inverter:get() then
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Left:get())
         else
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Walking_AA_Y_Add_Right:get())
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Right:get())
         end
     end
 
@@ -899,13 +1089,13 @@ local function Walking_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.Walking_AA_YM_Modifier:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
+        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.Walking_AA_YM_Modifier:get())
+        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Walking_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Walking_AA_Right_Limit:get())
-    ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):override(Main.Items.Walking_AA_Options:get())
+    Menu_neverlose.ref.antiaim.options:override(Main.Items.Walking_AA_Options:get())
 
     if Main.Items.Walking_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Walking_AA_Extended_Angels:get())
@@ -933,7 +1123,7 @@ Main.Items.Running_AA_Yaw_Modifier = Builder_Section:combo("R ~ Yaw Modifier", Y
 
 Main.Items.Running_AA_Left_Limit = Builder_Section:slider("R ~ Left Limit", 0, 60, 0, 1)
 Main.Items.Running_AA_Right_Limit = Builder_Section:slider("R ~ Right Limit", 0, 60, 0, 1)
-Main.Items.Running_AA_Options = Builder_Section:selectable("R ~ Options", ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):list())
+Main.Items.Running_AA_Options = Builder_Section:selectable("R ~ Options", Menu_neverlose.ref.antiaim.options:list())
 Main.Items.Running_AA_Extended_Angels = Builder_Section:switch("R ~ Extended Angels", false)
 
 Main.Items.Running_AA_Y_Add_Left = Main.Items.Running_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -954,7 +1144,7 @@ end)
 
 
 local function Running_AA_Modifier()
-    if ui.find("Aimbot", "Anti Aim", "Angles", "Freestanding"):get() then return end
+    if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items.Running_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -1017,17 +1207,17 @@ local function Running_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override(true)
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override("Break LC")
+            -- Menu_neverlose.ref.ragebot.hs:override(true)
+            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
             rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Main.Main_Anti_Defensive.main.lag_options:override("Always On")
-            Main.Main_Anti_Defensive.main.hidden:override(true)
+            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
+            Menu_neverlose.ref.antiaim.hidden:override(true)
         else
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override()
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override()
-            Main.Main_Anti_Defensive.main.lag_options:override()
-            Main.Main_Anti_Defensive.main.hidden:override()
+            -- Menu_neverlose.ref.ragebot.hs:override()
+            Menu_neverlose.ref.ragebot.hs_options:override()
+            Menu_neverlose.ref.ragebot.lag_options:override()
+            Menu_neverlose.ref.antiaim.hidden:override()
         end
     end
 
@@ -1045,15 +1235,15 @@ local function Running_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     Running_Flag_2 = true
                     if math.random(1, 2) == 1 then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                        Menu_neverlose.ref.antiaim.offset:override(-60)
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                        Menu_neverlose.ref.antiaim.offset:override(60)
                     end
                 else
                     if Running_Flag then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Right:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Right:get())
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Left:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Left:get())
                     end
                 end
                 Running_Flag = not Running_Flag
@@ -1065,23 +1255,23 @@ local function Running_AA_Modifier()
             Number = 0.9,
             callback = function()
                 if Running_Flag_2 then
-                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    Menu_neverlose.ref.antiaim.offset:override(0)
                     Running_Flag_2 = false
                 end
             end
         })
         -- AAWait(Main.Items.Running_AA_Y_Time:get(), function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Right:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Right:get())
         -- end, function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Left:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Left:get())
         -- end)
     end
 
     if Main.Items.Running_AA_Yaw_Add_Type:get() == 'Static' then
-        if ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Inverter"):get() then
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Left:get())
+        if Menu_neverlose.ref.antiaim.inverter:get() then
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Left:get())
         else
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Running_AA_Y_Add_Right:get())
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Right:get())
         end
     end
 
@@ -1092,13 +1282,13 @@ local function Running_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.Running_AA_YM_Modifier:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
+        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.Running_AA_YM_Modifier:get())
+        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Running_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Running_AA_Right_Limit:get())
-    ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):override(Main.Items.Running_AA_Options:get())
+    Menu_neverlose.ref.antiaim.options:override(Main.Items.Running_AA_Options:get())
 
     if Main.Items.Running_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Running_AA_Extended_Angels:get())
@@ -1127,7 +1317,7 @@ Main.Items.Crouching_AA_Yaw_Modifier = Builder_Section:combo("C ~ Yaw Modifier",
 
 Main.Items.Crouching_AA_Left_Limit = Builder_Section:slider("C ~ Left Limit", 0, 60, 0, 1)
 Main.Items.Crouching_AA_Right_Limit = Builder_Section:slider("C ~ Right Limit", 0, 60, 0, 1)
-Main.Items.Crouching_AA_Options = Builder_Section:selectable("C ~ Options", ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):list())
+Main.Items.Crouching_AA_Options = Builder_Section:selectable("C ~ Options", Menu_neverlose.ref.antiaim.options:list())
 Main.Items.Crouching_AA_Extended_Angels = Builder_Section:switch("C ~ Extended Angels", false)
 
 Main.Items.Crouching_AA_Y_Add_Left = Main.Items.Crouching_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -1149,7 +1339,7 @@ end)
 
 
 local function Crouching_AA_Modifier()
-    if ui.find("Aimbot", "Anti Aim", "Angles", "Freestanding"):get() then return end
+    if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items.Crouching_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -1212,17 +1402,17 @@ local function Crouching_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override(true)
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override("Break LC")
+            -- Menu_neverlose.ref.ragebot.hs:override(true)
+            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
             rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Main.Main_Anti_Defensive.main.lag_options:override("Always On")
-            Main.Main_Anti_Defensive.main.hidden:override(true)
+            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
+            Menu_neverlose.ref.antiaim.hidden:override(true)
         else
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override()
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override()
-            Main.Main_Anti_Defensive.main.lag_options:override()
-            Main.Main_Anti_Defensive.main.hidden:override()
+            -- Menu_neverlose.ref.ragebot.hs:override()
+            Menu_neverlose.ref.ragebot.hs_options:override()
+            Menu_neverlose.ref.ragebot.lag_options:override()
+            Menu_neverlose.ref.antiaim.hidden:override()
         end
     end
 
@@ -1240,15 +1430,15 @@ local function Crouching_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     Crouching_Flag2 = true
                     if math.random(1, 2) == 1 then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                        Menu_neverlose.ref.antiaim.offset:override(-60)
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                        Menu_neverlose.ref.antiaim.offset:override(60)
                     end
                 else
                     if Crouching_Flag then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Right:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Right:get())
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Left:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Left:get())
                     end
                 end
 
@@ -1261,23 +1451,23 @@ local function Crouching_AA_Modifier()
             Number = 0.9,
             callback = function()
                 if Crouching_Flag2 then
-                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    Menu_neverlose.ref.antiaim.offset:override(0)
                     Crouching_Flag2 = false
                 end
             end
         })
         -- AAWait(Main.Items.Crouching_AA_Y_Time:get(), function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Right:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Right:get())
         -- end, function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Left:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Left:get())
         -- end)
     end
 
     if Main.Items.Crouching_AA_Yaw_Add_Type:get() == 'Static' then
-        if ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Inverter"):get() then
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Left:get())
+        if Menu_neverlose.ref.antiaim.inverter:get() then
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Left:get())
         else
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.Crouching_AA_Y_Add_Right:get())
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Right:get())
         end
     end
 
@@ -1288,13 +1478,13 @@ local function Crouching_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.Crouching_AA_YM_Modifier:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
+        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.Crouching_AA_YM_Modifier:get())
+        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Crouching_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Crouching_AA_Right_Limit:get())
-    ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):override(Main.Items.Crouching_AA_Options:get())
+    Menu_neverlose.ref.antiaim.options:override(Main.Items.Crouching_AA_Options:get())
 
     if Main.Items.Crouching_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Crouching_AA_Extended_Angels:get())
@@ -1322,7 +1512,7 @@ Main.Items.In_Air_AA_Yaw_Modifier = Builder_Section:combo("A ~ Yaw Modifier", Ya
 
 Main.Items.In_Air_AA_Left_Limit = Builder_Section:slider("A ~ Left Limit", 0, 60, 0, 1)
 Main.Items.In_Air_AA_Right_Limit = Builder_Section:slider("A ~ Right Limit", 0, 60, 0, 1)
-Main.Items.In_Air_AA_Options = Builder_Section:selectable("A ~ Options", ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):list())
+Main.Items.In_Air_AA_Options = Builder_Section:selectable("A ~ Options", Menu_neverlose.ref.antiaim.options:list())
 Main.Items.In_Air_AA_Extended_Angels = Builder_Section:switch("A ~ Extended Angels", false)
 
 Main.Items.In_Air_AA_Y_Add_Left = Main.Items.In_Air_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -1344,7 +1534,7 @@ end)
 
 
 local function In_Air_AA_Modifier()
-    if ui.find("Aimbot", "Anti Aim", "Angles", "Freestanding"):get() then return end
+    if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items.In_Air_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -1407,17 +1597,17 @@ local function In_Air_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override(true)
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override("Break LC")
+            -- Menu_neverlose.ref.ragebot.hs:override(true)
+            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
             rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Main.Main_Anti_Defensive.main.lag_options:override("Always On")
-            Main.Main_Anti_Defensive.main.hidden:override(true)
+            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
+            Menu_neverlose.ref.antiaim.hidden:override(true)
         else
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override()
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override()
-            Main.Main_Anti_Defensive.main.lag_options:override()
-            Main.Main_Anti_Defensive.main.hidden:override()
+            -- Menu_neverlose.ref.ragebot.hs:override()
+            Menu_neverlose.ref.ragebot.hs_options:override()
+            Menu_neverlose.ref.ragebot.lag_options:override()
+            Menu_neverlose.ref.antiaim.hidden:override()
         end
     end
 
@@ -1435,15 +1625,15 @@ local function In_Air_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     In_Air_Flag2 = true
                     if math.random(1, 2) == 1 then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                        Menu_neverlose.ref.antiaim.offset:override(-60)
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                        Menu_neverlose.ref.antiaim.offset:override(60)
                     end
                 else
                     if In_Air_Flag then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Right:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Right:get())
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Left:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Left:get())
                     end
                 end
                 In_Air_Flag = not In_Air_Flag
@@ -1455,23 +1645,23 @@ local function In_Air_AA_Modifier()
             Number = 0.9,
             callback = function()
                 if In_Air_Flag2 then
-                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    Menu_neverlose.ref.antiaim.offset:override(0)
                     In_Air_Flag2 = false
                 end
             end
         })
         -- AAWait(Main.Items.In_Air_AA_Y_Time:get(), function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Right:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Right:get())
         -- end, function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Left:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Left:get())
         -- end)
     end
 
     if Main.Items.In_Air_AA_Yaw_Add_Type:get() == 'Static' then
-        if ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Inverter"):get() then
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Left:get())
+        if Menu_neverlose.ref.antiaim.inverter:get() then
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Left:get())
         else
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AA_Y_Add_Right:get())
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Right:get())
         end
     end
 
@@ -1482,13 +1672,13 @@ local function In_Air_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.In_Air_AA_YM_Modifier:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
+        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.In_Air_AA_YM_Modifier:get())
+        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.In_Air_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.In_Air_AA_Right_Limit:get())
-    ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):override(Main.Items.In_Air_AA_Options:get())
+    Menu_neverlose.ref.antiaim.options:override(Main.Items.In_Air_AA_Options:get())
 
     if Main.Items.In_Air_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.In_Air_AA_Extended_Angels:get())
@@ -1516,7 +1706,7 @@ Main.Items.In_Air_AC_AA_Yaw_Modifier = Builder_Section:combo("AC ~ Yaw Modifier"
 
 Main.Items.In_Air_AC_AA_Left_Limit = Builder_Section:slider("AC ~ Left Limit", 0, 60, 0, 1)
 Main.Items.In_Air_AC_AA_Right_Limit = Builder_Section:slider("AC ~ Right Limit", 0, 60, 0, 1)
-Main.Items.In_Air_AC_AA_Options = Builder_Section:selectable("AC ~ Options", ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):list())
+Main.Items.In_Air_AC_AA_Options = Builder_Section:selectable("AC ~ Options", Menu_neverlose.ref.antiaim.options:list())
 Main.Items.In_Air_AC_AA_Extended_Angels = Builder_Section:switch("AC ~ Extended Angels", false)
 
 Main.Items.In_Air_AC_AA_Y_Add_Left = Main.Items.In_Air_AC_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -1538,7 +1728,7 @@ end)
 
 
 local function In_Air_AC_AA_Modifier()
-    if ui.find("Aimbot", "Anti Aim", "Angles", "Freestanding"):get() then return end
+    if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items.In_Air_AC_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -1601,17 +1791,17 @@ local function In_Air_AC_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override(true)
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override("Break LC")
+            -- Menu_neverlose.ref.ragebot.hs:override(true)
+            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
             rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Main.Main_Anti_Defensive.main.lag_options:override("Always On")
-            Main.Main_Anti_Defensive.main.hidden:override(true)
+            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
+            Menu_neverlose.ref.antiaim.hidden:override(true)
         else
-            -- ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):override()
-            ui.find("Aimbot", "Ragebot", "Main", "Hide Shots", "Options"):override()
-            Main.Main_Anti_Defensive.main.lag_options:override()
-            Main.Main_Anti_Defensive.main.hidden:override()
+            -- Menu_neverlose.ref.ragebot.hs:override()
+            Menu_neverlose.ref.ragebot.hs_options:override()
+            Menu_neverlose.ref.ragebot.lag_options:override()
+            Menu_neverlose.ref.antiaim.hidden:override()
         end
     end
 
@@ -1629,15 +1819,15 @@ local function In_Air_AC_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     In_Air_AC_Flag2 = true
                     if math.random(1, 2) == 1 then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+                        Menu_neverlose.ref.antiaim.offset:override(-60)
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(60)
+                        Menu_neverlose.ref.antiaim.offset:override(60)
                     end
                 else
                     if In_Air_AC_Flag then
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
                     else
-                        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
+                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
                     end
                 end
                 In_Air_AC_Flag = not In_Air_AC_Flag
@@ -1649,23 +1839,23 @@ local function In_Air_AC_AA_Modifier()
             Number = 0.9,
             callback = function()
                 if In_Air_AC_Flag2 then
-                    ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(0)
+                    Menu_neverlose.ref.antiaim.offset:override(0)
                     In_Air_AC_Flag2 = false
                 end
             end
         })
         -- AAWait(Main.Items.In_Air_AC_AA_Y_Time:get(), function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
         -- end, function()
-        --     ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
+        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
         -- end)
     end
 
     if Main.Items.In_Air_AC_AA_Yaw_Add_Type:get() == 'Static' then
-        if ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Inverter"):get() then
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
+        if Menu_neverlose.ref.antiaim.inverter:get() then
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
         else
-            ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
+            Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
         end
     end
 
@@ -1676,13 +1866,13 @@ local function In_Air_AC_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier", "Offset"):override(Main.Items.In_Air_AC_AA_YM_Modifier:get())
-        ui.find("Aimbot", "Anti Aim", "Angles", "Yaw Modifier"):override(YawModifier)
+        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.In_Air_AC_AA_YM_Modifier:get())
+        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.In_Air_AC_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.In_Air_AC_AA_Right_Limit:get())
-    ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Options"):override(Main.Items.In_Air_AC_AA_Options:get())
+    Menu_neverlose.ref.antiaim.options:override(Main.Items.In_Air_AC_AA_Options:get())
 
     if Main.Items.In_Air_AC_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.In_Air_AC_AA_Extended_Angels:get())
@@ -1747,11 +1937,11 @@ local function Fake_Lag_AA_Modifier()
             flag = "Fake_Lag_Limit",
             Number = 0.01,
             callback = function()
-                ui.find("Aimbot", "Anti Aim", "Fake Lag", "Limit"):override(math.random(Main.Items.Fake_Lag_AA_Min_Limit:get(), Main.Items.Fake_Lag_AA_Max_Limit:get()))
+                Menu_neverlose.ref.antiaim.limit:override(math.random(Main.Items.Fake_Lag_AA_Min_Limit:get(), Main.Items.Fake_Lag_AA_Max_Limit:get()))
             end
         })
     else
-        ui.find("Aimbot", "Anti Aim", "Fake Lag", "Limit"):override(Main.Items.Fake_Lag_AA_Max_Limit:get())
+        Menu_neverlose.ref.antiaim.limit:override(Main.Items.Fake_Lag_AA_Max_Limit:get())
     end
 
 end
@@ -1785,6 +1975,8 @@ end
 
 
 local function AntiAim_createmove(cmd)
+    if not Main.Items.Build_AA:get() then return end
+
     if GetState() == "Standing" and Main.Items.Standing_AA_Enable:get() then
         Standing_AA_Modifier()
     elseif GetState() == "Walking" and Main.Items.Walking_AA_Enable:get() then
@@ -1836,54 +2028,128 @@ Chose_Options:set_callback(function()
 
     extasy_global(TurnTalbe(Chose_Options:get()))
 
-    -- for i,v in pairs(Main.Items) do
-    --     if string.find(i, "Walking_AA_Enabled") then
-    --         v:visibility(TurnTalbe(Chose_Options:get()) == "Walking" and Main.Items.Build_AA:get())
-    --     end
-    -- end
 end)
-
--- Main.Items.Defensive = Main.Tabs.AntiAim:switch("Defensive Anti-Aim")
-
--- local pitch_settings = Access_add("pitch_settings", "DefAA", Main.Tabs.AntiAim:combo("pitch settings", {"Zero", 'Up', "Down", "Random", "Jitter", "45 deg"}):visibility(false))
--- local yaw_settings = Access_add("yaw_settings", "DefAA", Main.Tabs.AntiAim:combo("yaw settings", {"Static", 'Random', "Side-Way", "Spin"}):visibility(false))
--- local SpinSpeed = Access_add("SpinSpeed", "DefAA", Main.Tabs.AntiAim:slider("Spin Speed", 0, 1000, 0, 1):visibility(false))
 
 Main.Items.randomize = Main.Tabs.Ragebot:switch("Randomize DT"):tooltip("The More you turn up max the more it gets randomized")
 Main.Items.Max = Main.Items.randomize:create():slider("Max", 0, 10, 0, 1)
 Main.Items.Min = Main.Items.randomize:create():slider("Min", 0, 10, 0, 1)
 
-Main.Items.Watermark = Main.Tabs.Misc:switch("Watermark"):tooltip("Turns on the custom watermark")
+Main.Items.Randomize_Multipoint = Main.Tabs.Ragebot:switch("Randomize Multipoint"):tooltip(ui.get_icon("triangle-exclamation").."Randomizing Multipoint from (0-100) Multipoint is when its set to 20 it will focus on the head more and shoot closer to the middle if its at a hundred it will shoot when it is hittable and will probably miss")
+Main.Items.Randomize_Multipoint_AllowedWeapons = Main.Items.Randomize_Multipoint:create():selectable("Weapons", weapons)
 
-Main.Items.WatermarkColor = Main.Items.Watermark:create():color_picker("Watermark Color", {
-	["Normal"] = {
-		color(255, 255, 255, 0)
-	}
-})
+Main.Items.manualaa = Main.Tabs.RageMisc:combo("Manual AA", {"None", "Left", "Backwards", "Right", "Forwards", "Freestanding"})
 
-Main.Items.CE = Main.Tabs.Misc:switch("Croshiar Events")
+Main.Items.AntiHead = Main.Tabs.RageMisc:switch("Anti-Head [BETA]"):tooltip(ui.get_icon("triangle-exclamation").."Attempts to randomize your head yaw making it harder to predict")
 
-Main.Items.CScope = Main.Tabs.Scope:switch("Custom Scope")
+function tablefind(tbl, value)
+    for k, v in pairs(tbl) do
+        if v == value then
+            return k
+        end
+    end
+    return nil
+end
 
-local AlwaysOn = Access_add("AlwaysOn", "CustScope", Main.Tabs.Scope:switch("Always On"):visibility(false))
-local line_length = Access_add("line_length", "CustScope", Main.Tabs.Scope:slider("Line Length", -1000, 1000, 50, 0.5):visibility(false))
-local gap_size = Access_add("gap_size", "CustScope", Main.Tabs.Scope:slider("Gap Size", -200, 200, 60, 1):visibility(false))
-local fade_steps = Access_add("fade_steps", "CustScope", Main.Tabs.Scope:slider("Fade Alpha", 0, 255, 10, 1):visibility(false))
-local CScopeColor = Access_add("CScopeColor", "CustScope", Main.Tabs.Scope:color_picker("Scope Color", {["Normal"] = {color(255, 255, 255, 255)}}):visibility(false))
-local Top_Bottom_lines = Access_add("Top_Bottom_lines", "CustScope", Main.Tabs.Scope:switch("Top/Bottom Lines"):visibility(false))
-local Right_Left_lines = Access_add("Right_Left_lines", "CustScope", Main.Tabs.Scope:switch("Right/Lift Lines"):visibility(false))
-local Rounding = Access_add("Rounding", "CustScope", Main.Tabs.Scope:slider("Rounding", 0, 20, 2, 1):visibility(false))
+local function Rand_Multipoint()
+    if not Main.Items.Randomize_Multipoint:get() then return end
+    -- table.foreach(Main.Items.Randomize_Multipoint_AllowedWeapons:get(), print)
+    for i,v in pairs(weapons) do
+        if tablefind(Main.Items.Randomize_Multipoint_AllowedWeapons:get(), v) then
+            ui.find("Aimbot", "Ragebot", "Selection", v, "Multipoint", "Head Scale"):override(math.random(0, 100))
+            ui.find("Aimbot", "Ragebot", "Selection", v, "Multipoint", "Body Scale"):override(math.random(0, 100))
+        else
+            ui.find("Aimbot", "Ragebot", "Selection", v, "Multipoint", "Head Scale"):override()
+            ui.find("Aimbot", "Ragebot", "Selection", v, "Multipoint", "Body Scale"):override()
+        end
+    end
+end
 
-Main.Items.no_fall_damage = Main.Tabs.Misc:switch('No Fall Damage')
-Main.Items.fix_nade = Main.Tabs.Misc:switch('fix nade')
-Main.Items.fastladder = Main.Tabs.Misc:switch('fast ladder')
-Main.Items.Clantag = Main.Tabs.Misc:switch('Clan Tag')
-Main.Items.Clantag_Tag = Main.Tabs.Misc:combo('Tag', {
-    "Mango",
-    "gamesense"
-})
+local function Randomize_DT_Ticks(cmd)
+    if not Main.Items.randomize:get() then return end
+    if Main.Items.Min:get() > Main.Items.Max:get() then
+        Main.Items.Max:set(Main.Items.Min:get())
+    end
+    Menu_neverlose.ref.ragebot.lag_limit:override(math.random(Main.Items.Min:get(), Main.Items.Max:get()))
+end
 
-Main.Items.Aspect_Ratio = Main.Tabs.Misc:slider("Aspect Ratio", 0, 60, 0, 1)
+local Enemy_Anti_Head = function()
+    if not Main.Items.AntiHead:get() then return end
+    if Main.Items.manualaa:get() ~= "None" then return end
+    local Enemies_Table = entity.get_players(true, false)
+    for i,v in pairs(Enemies_Table) do
+        if Get_Enemy_Visible(v, true, true) then
+            Main.Items.Build_AA:override(false)
+            if Menu_neverlose.ref.ragebot.dt:get() or Menu_neverlose.ref.ragebot.hs:get() then
+                rage.antiaim:override_hidden_pitch(math.random(-89, 89))
+                rage.antiaim:override_hidden_yaw_offset(math.random(-360, 360))
+                Menu_neverlose.ref.ragebot.lag_options:override("Always On")
+                Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
+                Menu_neverlose.ref.antiaim.hidden:override(true)
+            else
+                Menu_neverlose.ref.antiaim.limit:override(math.random(0, 14))
+                Menu_neverlose.ref.antiaim.offset:override(math.random(-30, 45))
+                ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(math.random(-60, 60))
+                ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(math.random(-60, 60))
+                Menu_neverlose.ref.antiaim.ymoffset:override(math.random(-34, 34))
+            end
+        else
+            -- Main.Items.Build_AA:override()
+            -- Menu_neverlose.ref.ragebot.lag_options:override()
+            -- Menu_neverlose.ref.antiaim.hidden:override()
+            -- Menu_neverlose.ref.ragebot.hs_options:override()
+            -- ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override()
+            -- Menu_neverlose.ref.antiaim.limit:override()
+            -- ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override()
+            -- Menu_neverlose.ref.antiaim.ymoffset:override()
+        end
+    end
+end
+
+local manual_aa = function()
+
+    yaw = Menu_neverlose.ref.antiaim.yaw
+    base = Menu_neverlose.ref.antiaim.base
+    offset = Menu_neverlose.ref.antiaim.offset
+    fs = Menu_neverlose.ref.antiaim.fs
+
+        if Main.Items.manualaa:get() == "Left" then
+            yaw:override("Backward")
+            base:override("Local View")
+            offset:override(-90)
+            fs:override(false)
+            Main.Items.Build_AA:override(false)
+        elseif Main.Items.manualaa:get() == "Backwards" then
+            yaw:override("Backward")
+            base:override("Local View")
+            offset:override(0)
+            fs:override(false)
+            Main.Items.Build_AA:override(false)
+        elseif Main.Items.manualaa:get() == "Right" then
+            yaw:override("Backward")
+            base:override("Local View")
+            offset:override(90)
+            fs:override(false)
+            Main.Items.Build_AA:override(false)
+        elseif Main.Items.manualaa:get() == "Forwards" then
+            yaw:override("Backward")
+            base:override("Local View")
+            offset:override(180)
+            fs:override(false)
+            Main.Items.Build_AA:override(false)
+        elseif Main.Items.manualaa:get() == "Freestanding" then
+            yaw:override("Backward")
+            base:override("Local View")
+            offset:override(0)
+            fs:override(true)
+            Main.Items.Build_AA:override(false)
+        elseif Main.Items.manualaa:get() == "None" then
+            yaw:override()
+            base:override()
+            fs:override()
+            offset:override()
+            Main.Items.Build_AA:override()
+        end
+end
 
 local function fix_nade()
     if not Main.Items.fix_nade:get() then return end
@@ -1899,8 +2165,9 @@ local function fix_nade()
 end
 
 local function fix_fakeduck()
-    if not ui.find("Aimbot", "Anti Aim", "Misc", "Fake Duck"):get() then return end
-    ui.find("Aimbot", "Anti Aim", "Fake Lag", "Limit"):override(14)
+    if not Menu_neverlose.ref.antiaim.fd:get() then return end
+    Menu_neverlose.ref.antiaim.limit:override(14)
+    ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(false)
 end
 
 local function no_fall_damage(cmd)
@@ -1939,54 +2206,68 @@ local function fastladder(cmd)
     end
 end
 
-local Gamesense_tag = {
-    [1] = function() return "gamesense" end,
-    [2] = function() return "amesense " end,
-    [3] = function() return "mesense  " end,
-	[4] = function() return "esense   " end,
-	[5] = function() return "sense    " end,
-	[6] = function() return "ense     " end,
-	[7] = function() return "nse      " end,
-	[8] = function() return "se       " end,
-	[9] = function() return "e        " end,
-	[10] = function() return "         " end,
-	[11] = function() return "        g" end,
-	[12] = function() return "       ga" end,
-	[13] = function() return "      gam" end,
-	[14] = function() return "     game" end,
-	[15] = function() return "    games" end,
-	[16] = function() return "   gamese" end,
-	[17] = function() return "  gamesen" end,
-	[18] = function() return " gamesens" end,
-	[19] = function() return "gamesense" end,
-	[20] = function() return "gamesense" end,
-	[21] = function() return "gamesense" end,
-	[22] = function() return "gamesense" end,
-	[23] = function() return "gamesense" end,
-	[24] = function() return "gamesense" end,
-	[25] = function() return "gamesense" end,
-	[26] = function() return "gamesense" end,
-	[27] = function() return "gamesense" end,
-	[28] = function() return "gamesense" end
-}
 
-local Mango_tag = {
-    [1] = function() return "Mango" end,
-    [2] = function() return "ango " end,
-    [3] = function() return "ngo  " end,
-	[4] = function() return "go   " end,
-	[5] = function() return "o    " end,
-	[6] = function() return "         " end,
-	[10] = function() return "    M" end,
-	[11] = function() return "   Ma" end,
-	[12] = function() return "  Man" end,
-	[13] = function() return " Mang" end,
-	[14] = function() return "Mango" end,
-}
+Main.Items.Slientshots = Main.Tabs.Ragebot:switch("Slient shots"):tooltip("A.K.A No fakelag on shots\n\nForce send packet while every shots")
+
+Main.Items.Slientshots_Mode = Main.Items.Slientshots:create():combo("Mode", "Overrides", "Send packets")
+
+local always_choke_slient_shots = function()
+
+    events.createmove:set(function(cmd)
+        local localplayer = entity.get_local_player()
+        if not localplayer then return end
+    
+        local my_weapon = localplayer:get_player_weapon()
+    
+        if Main.Items.Slientshots:get() then
+            if my_weapon then
+                local last_shot_time = my_weapon["m_fLastShotTime"]
+    	    	local time_difference = globals.curtime - last_shot_time
+                
+                if time_difference <= 0.025 then
+                    if Main.Items.Slientshots_Mode:get() == "Overrides" then
+                        Menu_neverlose.ref.antiaim.bodyyaw:override(false)
+                        Menu_neverlose.ref.antiaim.fl_enabled:override(false)
+                        Menu_neverlose.ref.antiaim.limit:override(1)
+                    elseif Main.Items.Slientshots_Mode:get() == "Send packets" then
+                        --sendpacket_switch = true
+                        cmd.no_choke = true
+                        cmd.no_choke = false
+                        cmd.no_choke = true
+                        cmd.no_choke = false
+                        cmd.no_choke = true
+                    end
+                else
+                    Menu_neverlose.ref.antiaim.bodyyaw:override()
+                    Menu_neverlose.ref.antiaim.fl_enabled:override()
+                    Menu_neverlose.ref.antiaim.limit:override()
+                end
+            end
+        end
+    end)
+end
+
+
+Main.Items.CE = Main.Tabs.Misc:switch("Croshiar Events")
+
+Main.Items.CScope = Main.Tabs.Scope:switch("Custom Scope")
+
+local AlwaysOn = Access_add("AlwaysOn", "CustScope", Main.Tabs.Scope:switch("Always On"):visibility(false))
+local line_length = Access_add("line_length", "CustScope", Main.Tabs.Scope:slider("Line Length", -1000, 1000, 50, 0.5):visibility(false))
+local gap_size = Access_add("gap_size", "CustScope", Main.Tabs.Scope:slider("Gap Size", -200, 200, 60, 1):visibility(false))
+local fade_steps = Access_add("fade_steps", "CustScope", Main.Tabs.Scope:slider("Fade Alpha", 0, 255, 10, 1):visibility(false))
+local CScopeColor = Access_add("CScopeColor", "CustScope", Main.Tabs.Scope:color_picker("Scope Color", {["Normal"] = {color(255, 255, 255, 255)}}):visibility(false))
+local Top_Bottom_lines = Access_add("Top_Bottom_lines", "CustScope", Main.Tabs.Scope:switch("Top/Bottom Lines"):visibility(false))
+local Right_Left_lines = Access_add("Right_Left_lines", "CustScope", Main.Tabs.Scope:switch("Right/Lift Lines"):visibility(false))
+local Rounding = Access_add("Rounding", "CustScope", Main.Tabs.Scope:slider("Rounding", 0, 20, 2, 1):visibility(false))
+
+Main.Items.no_fall_damage = Main.Tabs.Misc:switch('No Fall Damage')
+Main.Items.fix_nade = Main.Tabs.Misc:switch('fix nade')
+Main.Items.fastladder = Main.Tabs.Misc:switch('fast ladder')
+Main.Items.Clantag = Main.Tabs.Misc:switch('Clan Tag')
 
 local timing_switch = 20
 
-local frametime = 0
 local fps = 0
 local cur_mode = 0
 local timing = timing_switch
@@ -1995,36 +2276,55 @@ local function hk_create_move(cmd)
     timing = timing + 1
 end
 
-local function Clan_tag(cmd)
-    if entity.get_local_player() == nil then return end
-    if not Main.Items.Clantag:get() then return end
+local clantag = {}
 
-    frametime = 0.9 * frametime + (1.0 - 0.9) * frametime
-    fps = math.floor((1.0 / frametime) + 0.5)
-    
-    if timing >= timing_switch then
-        cur_mode = cur_mode + 1
-        if Main.Items.Clantag_Tag:get() == "gamesense" then
-            if cur_mode > #Gamesense_tag then
-                cur_mode = 1
-            end
-            
-            common.set_clan_tag(Gamesense_tag[cur_mode]())
-            timing = 0
-        elseif Main.Items.Clantag_Tag:get() == "Mango" then
-            if cur_mode > #Mango_tag then
-                cur_mode = 1
-            end
-            
-            common.set_clan_tag(Mango_tag[cur_mode]())
-            timing = 0
-        end
+clantag.animation = {
+    "M           ", -- 9 characters
+    "Ma          ", -- 9 characters
+    "Man         ", -- 9 characters
+    "Mang        ", -- 9 characters
+    "Mang0       ", -- 9 characters
+    "Mang0.      ", -- 9 characters
+    "Mang0.l     ", -- 9 characters
+    "Mang0.lu    ", -- 9 characters
+    "Mang0.lua   ", -- 9 characters
+    "Mang0.lua   ", -- 9 characters (repeated for symmetry)
+    "Mang0.lu    ", -- 9 characters
+    "Mang0.l     ", -- 9 characters
+    "Mang0.      ", -- 9 characters
+    "Mang0       ", -- 9 characters
+    "Mang        ", -- 9 characters
+    "Man         ", -- 9 characters
+    "Ma          ", -- 9 characters
+    "M           ", -- 9 characters
+}
+
+clantag.vars = {
+    remove = false,
+    timer = 0
+}
+
+clantag.run = function()
+    if not Main.Items.Clantag:get() then return end
+    local curtime = math.floor(globals.curtime * 2)
+
+    if clantag.vars.timer ~= curtime then
+        common.set_clan_tag(clantag.animation[curtime % #clantag.animation + 1])
+        clantag.vars.timer = curtime
     end
-    
+
+    clantag.vars.remove = true
+end
+
+clantag.remove = function()
+    if clantag.vars.remove then
+        common.set_clan_tag("")
+        clantag.vars.remove = false
+    end
 end
 
 Main.Items.Clantag:set_callback(function()
-    common.set_clan_tag("")
+    clantag.remove()
 end)
 
 Main.Items.Support_Me = Main.Tabs.KillSay:switch('Support Me')
@@ -2048,9 +2348,7 @@ local n1_table = {
 
 local function Visibility_easy()
     for i,v in pairs(Main.Items) do
-        if string.find(i, "DefAA") then
-            v:visibility(Main.Items.Defensive:get())
-        elseif string.find(i, "CustScope") then
+        if string.find(i, "CustScope") then
             v:visibility(Main.Items.CScope:get())
         elseif string.find(i, "CustKillsay") then
             v:visibility(Main.Items.Custom_Kill:get())
@@ -2060,6 +2358,24 @@ local function Visibility_easy()
     end
 end
 
+local fonts = {
+    font = { font = render.load_font("Verdana Bold", 11), size = 11 },
+    font1 = { font = render.load_font("Verdana Bold", 10), size = 10 },
+    font2 = { font = render.load_font("Arial", 11), size = 11 },
+    font5 = { font = render.load_font("Arial Bold", 11), size = 11 },
+    font55 = { font = render.load_font("Arial Bold", 26), size = 26 },
+    font7 = { font = render.load_font("Arial", 13,"a"), size = 13 },
+    fontpred = { font = render.load_font("Arial Bold", 12), size = 12 },
+    fontideal = { font = render.load_font("Verdana", 12), size = 12 },
+    verdana_skt = { font = render.load_font("Verdana", 13), size = 13 },
+    verdana_bolde = { font = render.load_font("Verdana", 11, 'b'), size = 11 },
+    verdanar11 = { font =  render.load_font('Verdana', 11, 'a'), size = 11 },
+    fontxd = { font = render.load_font("Verdana Bold", 23), size = 23 },
+    fontxd2 = { font = render.load_font("Verdana", 12), size = 12 },
+    fontdx = { font = render.load_font("Verdana Bold", 10,"o")},
+    fontarrow = { font = render.load_font("Verdana Bold", 21, 'a'), size = 21 },
+    console = { font = render.load_font("Verdana Bold", 10, 'd'), size = 10 }
+}
 
 Main.visuals.base_render = {
     box = function(x,y,w,h,color,rounding)
@@ -2099,96 +2415,171 @@ Main.visuals.global_render = {
     end
 }
 
-local canShowText = false
+Main.visuals.Frame = function(x, y, z, height, color_, rounding)
+    local pos1, pos2 = vector(x, y), vector(x + z ,y + height)
+    render.rect(vector(x, y), vector(x + z ,y + height), color(color_.r, color_.g, color_.b, color_.a), rounding, false)
+    return pos1, pos2
+end
 
-local function Watermark(cmd)
-    -- Determine whether the watermark should be visible
-    local isVisible = Main.Items.Watermark:get()
+Main.visuals.Textlabel = function(x,y,cen,string,color,TYPE,font,fontsize)
+    --1=for Defaultfont, 
+    --2=for Smallfont, 
+    --3 = for Consolefont
+    --4=for Boldfont
 
-    -- Initialize animation state if it doesn't exist
-    if not Main.animation_state then
-        Main.animation_state = {
-            startTime = globals.curtime,
-            duration = 0.5,       -- Duration of the animation in seconds
-            isAnimating = false,
-            isVisible = false,  -- Current visibility status of the watermark
-            currentWidth = 0,
-            Alpha = 0,
-            StartAlpha = 20
-        }
+    render.text(fonts.font.font, vector(x,y), color, cen and 'c' or '', string)
+end
+
+Main.visuals.Shadow = function(pos_a, pos_b, width, height, colour, thickness, offset, rounding)
+    render.shadow(vector(pos_a, pos_b), vector(pos_a + width, pos_b + height), color(colour.r, colour.g, colour.b, colour.a), thickness, offset, rounding)
+end
+
+Main.visuals.watermark = {}
+
+Main.visuals.watermark.tag = {}
+
+Main.visuals.watermark.tag.animation = {
+    "M           ", -- 9 characters
+    "Ma          ", -- 9 characters
+    "Man         ", -- 9 characters
+    "Mang        ", -- 9 characters
+    "Mang0       ", -- 9 characters
+    "Mang0.      ", -- 9 characters
+    "Mang0.l     ", -- 9 characters
+    "Mang0.lu    ", -- 9 characters
+    "Mang0.lua   ", -- 9 characters
+    "Mang0.lua   ", -- 9 characters (repeated for symmetry)
+    "Mang0.lu    ", -- 9 characters
+    "Mang0.l     ", -- 9 characters
+    "Mang0.      ", -- 9 characters
+    "Mang0       ", -- 9 characters
+    "Mang        ", -- 9 characters
+    "Man         ", -- 9 characters
+    "Ma          ", -- 9 characters
+    "M           ", -- 9 characters
+}
+
+Main.visuals.watermark.tag.vars = {
+    remove = false,
+    timer = 0
+}
+
+-- Function to update and run the animation
+Main.visuals.watermark.tag.run = function()
+    local curtime = math.floor(globals.curtime * 2)  -- Speed control (change multiplier for faster/slower)
+    
+    -- Avoid redundant updates if the time hasn't changed
+    if Main.visuals.watermark.tag.vars.timer ~= curtime then
+        -- Get the correct frame of the animation using modulo operation
+        local animation_frame = Main.visuals.watermark.tag.animation[curtime % #Main.visuals.watermark.tag.animation + 1]
+        
+        -- Update the timer so it only changes when curtime changes
+        Main.visuals.watermark.tag.vars.timer = curtime
+
+        -- Return the updated frame text
+        return animation_frame
     end
 
+    -- Default return in case no update is needed (keep the previous frame)
+    return Main.visuals.watermark.tag.animation[Main.visuals.watermark.tag.vars.timer % #Main.visuals.watermark.tag.animation + 1]
+end
+
+Main.Items.Watermark = Main.Tabs.Misc:switch("Watermark"):tooltip("Turns on the custom watermark")
+Main.Items.WatermarkType = Main.Items.Watermark:create():combo("Watermark Type", {"Static", "Dynamic"})
+
+Main.Items.WatermarkColor = Main.Items.Watermark:create():color_picker("Watermark Color", {
+	["Normal"] = {
+		color(25, 25, 25, 255)
+	}
+})
+
+Main.Items.WatermarkShadow = Main.Items.Watermark:create():color_picker("Watermark Shadow", {
+	["Normal"] = {
+		color(171, 28, 28, 255)
+	}
+})
+
+Main.visuals.watermark.draw = function()
+    if not Main.Items.Watermark:get() then return end
+
+    local speed = globals.frametime * 5
     local color_ref = Main.Items.WatermarkColor:get()
+    local water_shadow = Main.Items.WatermarkShadow:get()
+    local pos = { x = 0, y = 0, w = 0, h = 0 }
+    pos.x, pos.y = render.screen_size().x, 0
 
-    -- Trigger animation when visibility changes
-    if isVisible ~= Main.animation_state.isVisible then
-        Main.animation_state.isAnimating = true
-        Main.animation_state.startTime = globals.curtime
-        Main.animation_state.isVisible = isVisible
-    end
+    local offset = { x = 10, y = 10 }
 
-    if not isVisible and Main.animation_state.isAnimating == false then
-        return
-    end
+    pos.x = pos.x - offset.x
+    pos.y = pos.y + offset.y
 
-    -- Build the watermark text
     local text = ''
+    local Clantag_text = ''
+
     local username = Main.script_db.username
-    text = text .. Main.helpers.RGBToColorString(Main.script_db.lua_name, color(130, 95, 208, 255)) .. ' [ ' .. Main.helpers.RGBToColorString(Main.script_db.lua_version, color(246, 42, 239, 255)) .. ' ] | ' .. Main.helpers.RGBToColorString(username, color(42, 189, 246, 255)) .. ' | '
+
+    -- if UI.get('watermark_name') == 'Custom' then
+    --     username = UI.get('watermark_name_ref')
+    -- end
+    -- print(Main.visuals.watermark.tag.run())
+    local Lua_Name = Main.helpers.gradient_text(200, 171, 255, 255, 90, 124, 190, 255, Main.visuals.watermark.tag.run())
+    if Main.Items.WatermarkType:get() == "Static" then
+        Clantag_text = Main.helpers.gradient_text(200, 171, 255, 255, 90, 124, 190, 255, Main.script_db.lua_name)
+    elseif Main.Items.WatermarkType:get() == "Dynamic" then
+        if Lua_Name and Lua_Name ~= "" then
+            Clantag_text = Clantag_text .. Lua_Name
+        end
+    end
+
+    text = text.."                "
+    -- Make sure to only append if Lua_Name contains valid text (no blank updates)
+    
+    -- Append additional information to the text, such as version and username
+    text = text .. ' [' .. Main.script_db.lua_version .. '] | ' .. username .. ' | '
 
     local local_time = common.get_system_time()
+
     local time = string.format("%02d:%02d:%02d", local_time.hours, local_time.minutes, local_time.seconds)
+
     local ping = globals.is_in_game and math.floor(utils.net_channel().avg_latency[1] * 1000) or 0
+
     text = text .. 'delay: ' .. ping .. 'ms | ' .. time
 
-    -- Measure the text size
     local text_size = render.measure_text(1, '', text)
+
+    local posx2 = pos.x
+    pos.x = pos.x - text_size.x
+    pos.w = text_size.x
+    pos.h = 16
+    local Length = 40
+    local Height = 27
+
+    -- if UI.get('ui_style') == 0 then
+
+    -- x,y,w,h,color,rounding
+
+    -- render.rect(vector(pos.x - 10, pos.y), vector(pos.x - 10+pos.w + 10,pos.y+pos.h + 7), color(25, 25, 25, 255), 3, false)
+
+    Main.visuals.Frame(pos.x - Length, pos.y, pos.w + Length, Height, color_ref, 3)
+
+    Main.visuals.Shadow(pos.x - Length - 0.1, pos.y, pos.w + Length+0.1, Height, water_shadow, 20, 0, 2)
+
+    Main.visuals.Textlabel(pos.x - 10 + 6, pos.y + text_size.y / 2 - 1 + 2, false, text, color(255, 255, 255, 255), 1, 1)
+
+    Main.visuals.Textlabel(pos.x - 10, pos.y + 7, false, Clantag_text, color(255, 255, 255, 255), 1, 1)
+
+    -- local image_draw = render.load_image(network.get("https://en.neverlose.cc/static/avatars/"..common.get_username()..".png?t=1692979176"))
     
-    -- Set the desired length of the watermark in pixels (assume 5cm is about 200 pixels, depending on your screen resolution)
-    local desiredWidth = math.max(text_size.x + 10, 200)
+    render.texture(image_draw, vector(pos.x - 35, pos.y+3), vector(20, 20), color(255, 255, 255, 200))
 
-    -- If animating, update the current width
-    if Main.animation_state.isAnimating then
-        canShowText = false
-        local elapsedTime = globals.curtime - Main.animation_state.startTime
+    -- Main.visuals.base_render.box_filled(pos.x - 10, pos.y, pos.w + 10, { r = color_ref.r, g = color_ref.g, b = color_ref.b, a = 255 })
 
-        -- Calculate the target width based on visibility
-        local startWidth = Main.animation_state.isVisible and 0 or Main.animation_state.currentWidth
-        local endWidth = Main.animation_state.isVisible and desiredWidth or 0
+    -- Main.visuals.global_render.box(pos.x - 10, pos.y, pos.w + 10, { r = color_ref.r, g = color_ref.g, b = color_ref.b, a = 255 })
 
-        -- Animate the width using outQuad
-        Main.animation_state.currentWidth = easing:outQuad(elapsedTime, startWidth, endWidth - startWidth, Main.animation_state.duration)
-        -- wait(30, function()
-            Alpha = easing:outQuad(elapsedTime, Main.animation_state.StartAlpha, color_ref.a - Main.animation_state.StartAlpha, Main.animation_state.duration)
-        -- end)
-        -- Clamp the width and stop animating when the animation is complete
-        if elapsedTime >= Main.animation_state.duration then
-            Main.animation_state.currentWidth = endWidth
-            Main.animation_state.isAnimating = false
-        end
-    end
-
-    -- If the watermark is not supposed to be visible and the animation is complete, return
-    if not Main.animation_state.isVisible and not Main.animation_state.isAnimating then
-        return
-    end
-
-    wait({
-        time = 30,
-        flag = "canShowText",
-        Number = 0.1,
-        callback = function()
-            canShowText = true
-        end
-    })
-
-    -- Continue with rendering
-    local pos = { x = render.screen_size().x - Main.animation_state.currentWidth - 10, y = 10, w = Main.animation_state.currentWidth, h = 16 }
-
-    Main.visuals.global_render.box(pos.x, pos.y, pos.w, { r = color_ref.r, g = color_ref.g, b = color_ref.b, a = color_ref.a }, 2)
-    if canShowText then
-        Main.visuals.base_render.string(pos.x + 6, pos.y + pos.h / 2 - 0.1, false, text, color(color_ref.r, color_ref.g, color_ref.b, Alpha), 0, 1, 1)
-    end
+    -- Main.visuals.base_render.string(pos.x - 10 + 6, pos.y + text_size.y / 2 - 1, false, text, color(255, 255, 255, 255), 1, 1)
+    -- elseif UI.get('ui_style') == 1 then
+    --     Main.visuals.Render_engine.container(pos.x - 9, pos.y, pos.w + 9, pos.h, { r = color.r, g = color.g, b = color.b, a = 1 }, text, fonts.verdanar11.size, fonts.verdanar11.font)
+    -- end
 end
 
 local Exploit = 0
@@ -2197,13 +2588,71 @@ local function Visuals_Createmove()
     Exploit = rage.exploit:get()
 end
 
+Main.Items.viewmodel = Main.Tabs.Misc:switch("Viewmodel Changer")
+
+Main.Items.fov = Main.Items.viewmodel:create():slider("FOV", 0, 100, 90)
+Main.Items.x = Main.Items.viewmodel:create():slider("X", - 15, 15, 0)
+Main.Items.y = Main.Items.viewmodel:create():slider("Y", - 15, 15, 0)
+Main.Items.z = Main.Items.viewmodel:create():slider("Z", - 15, 15, 0)
+
+local viewmodel = function ()
+
+    fov = Main.Items.fov:get()
+    x = Main.Items.x:get()
+    y = Main.Items.y:get()
+    z = Main.Items.z:get()
+
+    if Main.Items.viewmodel:get() then
+        cvar["sv_competitive_minspec"]:int(0)
+        cvar["viewmodel_fov"]:float(fov)
+        cvar["viewmodel_offset_x"]:float(x)
+        cvar["viewmodel_offset_y"]:float(y)
+        cvar["viewmodel_offset_z"]:float(z)
+    else
+        cvar["sv_competitive_minspec"]:int(1)
+        cvar["viewmodel_fov"]:string("def.")
+        cvar["viewmodel_offset_x"]:string("def.")
+        cvar["viewmodel_offset_y"]:string("def.")
+        cvar["viewmodel_offset_z"]:string("def.")
+    end
+
+end
+
+local font = render.load_font("c:/windows/fonts/calibrib.ttf", 28, "ad")
+local alpha = 255
+
 local function Visuals_Indicator()
     if not Main.Items.CE:get() then return end
     local localplayer = entity.get_local_player()
     local screen_size = Main.helpers.screen_size
-    local DoubleTap = ui.find("Aimbot", "Ragebot", "Main", "Double Tap"):get()
-    local HS = ui.find("Aimbot", "Ragebot", "Main", "Hide Shots"):get()
-    local FD = ui.find("Aimbot", "Anti Aim", "Misc", "Fake Duck"):get()
+    local DoubleTap = Menu_neverlose.ref.ragebot.dt:get()
+    local HS = Menu_neverlose.ref.ragebot.hs:get()
+    local FD = Menu_neverlose.ref.antiaim.fd:get()
+
+    local x, y = render.screen_size().x, render.screen_size().y
+
+    local localplayer = entity.get_local_player()
+    if not localplayer then return end
+    
+    local exploit_color = (rage.exploit:get() == 1) and color("#cccccd") or color(255,0,0,255)
+    local slowdown = entity.get_local_player().m_flVelocityModifier
+    local fade_factor = ((1 / .15) * globals.frametime) * 255
+
+    local vel = localplayer.m_vecVelocity
+    local speed = math.sqrt(vel.x * vel.x + vel.y * vel.y)
+
+
+    if localplayer:is_alive() then
+        if (slowdown == 1 and alpha ~= 0) then
+            alpha = easing:clamp(alpha - fade_factor, 0, 255) 
+        elseif (slowdown ~= 1 and alpha ~= 255) then
+            alpha = easing:clamp(alpha + fade_factor, 0, 255)
+        end
+    else
+        alpha = 0
+    end
+
+    local offset = 1
 
     local text_size = render.measure_text(1, '', text)
 
@@ -2230,6 +2679,12 @@ local function Visuals_Indicator()
     local DTX, DTY = 10, 22
 
     Main.visuals.base_render.string(pos.x, pos.y - 3, false, GetState(), color(67,95,216,255), 1, 1)
+
+    render.shadow(vector(x/2 - 120,y / 2 - 333), vector(x/2 + 120,y / 2 - 325), color(76, 159, 242, alpha),20,0,1)
+    render.rect_outline(vector(x/2 - 120,y / 2 - 333), vector(x/2 + 120,y / 2 - 325), color(0,0,0, alpha), 1.2)
+    render.rect(vector(x/2 - 119,y / 2 - 332), vector(x/2 + slowdown * (119 - (-119)) + (-119) ,y / 2 - 326), color(168, 151, 205, alpha))
+    render.text(1, vector(x / 2, y / 2 - 345), color(255,255,255,alpha), "c", "\a698EFFFF" .. ui.get_icon("triangle-exclamation") .. " Slowed Down: " .. math.floor(slowdown * 100 + 0.5) .. "%")
+
     
     if DoubleTap then
         if Exploit == 1 then
@@ -2243,10 +2698,10 @@ local function Visuals_Indicator()
         if DoubleTap then
             Main.visuals.base_render.string(pos.x, pos.y + DTY, false, Text.OnShot, color(14,155,195,255), 1, 1)
         else
-            Main.visuals.base_render.string(pos.x, pos.y, false, Text.OnShot, color(14,155,195,255), 1, 1)
+            Main.visuals.base_render.string(pos.x, pos.y + DTX, false, Text.OnShot, color(14,155,195,255), 1, 1)
         end
     end
--- GetState()
+
     if FD then
         Main.visuals.base_render.string(pos.x - 5, pos.y - 40, false, "FD", color(222,129,24,255), 1, 1)
     end
@@ -2262,86 +2717,61 @@ local function Visuals_Indicator()
             end
         
             Main.visuals.base_render.string(pos.x + 40, pos.y - 40, false, tostring(damage), color(14,155,195,255), 1, 1)
-        end
+        end    
     end)
 
 end
- 
-local function Randomize_DT_Ticks(cmd)
-    if not Main.Items.randomize:get() then return end
-    if Main.Items.Min:get() > Main.Items.Max:get() then
-        Main.Items.Max:set(Main.Items.Min:get())
+
+Main.Items.Debug = Main.Tabs.RageMisc:switch("\a698EFFFF" .. ui.get_icon("triangle-exclamation") .. " Debug Mode")
+
+local debug_mode = function()
+
+    if not Main.Items.Debug:get() then return end
+
+
+    local elements = {
+        ["Feet Yaw"] = true, --Main.Items.Debuglist:get("Feet Yaw"),
+        ["Choked Commands"] = true, --Main.Items.Debuglist:get("Choked Commands"),
+        ["Real Yaw"] = true, --Main.Items.Debuglist:get("Real Yaw"),
+        ["Abs Yaw"] = true, --Main.Items.Debuglist:get("Abs Yaw"),
+        ["Desync"] = true, --Main.Items.Debuglist:get("Desync"),
+    }
+
+    local x,y = render.screen_size().x,render.screen_size().y
+
+    if not entity.get_local_player() then return end
+    if not globals.is_in_game or not globals.is_connected then return end
+    local DesyncAngle = math.ceil(math.abs(normalize_yaw(entity.get_local_player():get_anim_state().eye_yaw % 360 - math.floor(entity.get_local_player():get_anim_state().abs_yaw) % 360)))
+
+    local position2 = vector(x-1530,y-710)
+    render.rect(vector(290, 385), position2, color(25,25,25,100), 10, false) -- color: color[, rounding: number, no_clamp: boolean]
+
+
+    local i = 0
+    for element, value in pairs(elements) do
+        if value then
+            local position = vector(300, y - 800 + (15 * i))
+            local text = ""
+            
+            if element == "Feet Yaw" then
+                text = "Feet Yaw: " .. math.floor(entity.get_local_player().m_flPoseParameter[11] == nil and 0 or entity.get_local_player().m_flPoseParameter[11] * 120 - 60) or "Unknown ?"
+            elseif element == "Choked Commands" then
+                text = "Choke: " .. globals.choked_commands
+            elseif element == "Real Yaw" then
+                text = "Real yaw: " .. math.floor(entity.get_local_player():get_anim_state().eye_yaw)
+            elseif element == "Abs Yaw" then
+                text = "Abs yaw: " .. math.floor(entity.get_local_player():get_anim_state().abs_yaw)
+            elseif element == "Desync" then
+                text = "Desync: " .. DesyncAngle
+            end
+            render.text(1, position, color(255, 255, 255), "", text)
+            i = i + 1
+        end
     end
-    ui.find("Aimbot", "Ragebot", "Main", "Double Tap", "Fake Lag Limit"):override(math.random(Main.Items.Min:get(), Main.Items.Max:get()))
+
+    
+
 end
-
--- local function defensive_aa(cmd)
---     -- if ui.find("Scripts", "Flux Yaw", "🔰 Anti-Aim", "Main", "Freestanding"):get() then return end
---     local exploit_state = rage.exploit:get() -- Defensive need always lag
-    
---     local localplayer = entity.get_local_player()
---     if not localplayer then return end
-
---     local pitch_settings = pitch_settings:get()
---     local yaw_settings = yaw_settings:get()
---     local Spin_Speed = SpinSpeed:get()
-    
---     if (Main.Items.Defensive:get()) then
---         -- ui.find("Aimbot", "Anti Aim", "Angles", "Pitch"):override("Disabled")
---         local prop = localplayer["m_fFlags"]
---         local pitch_override = 0
---         local yaw_override = 0
-        
---         if pitch_settings == "Zero" then
---             pitch_override = 0
---         elseif pitch_settings == "Up" then
---             pitch_override = -89
---         elseif pitch_settings == "Down" then
---             pitch_override = 89
---         elseif pitch_settings == "Random" then
---             pitch_override = math.random(-89,89)
---         elseif pitch_settings == "Jitter" then
---             if (math.floor(globals.curtime * 100000) % 2) == 0 then
---                 pitch_override = 89
---             else
---                 pitch_override = -89
---             end
---         elseif pitch_settings == "45 Deg" then
---             if (math.floor(globals.curtime * 10000) % 2) == 0 then
---                 pitch_override = 45
---             else
---                 pitch_override = -45
---             end
---         end
---         if yaw_settings == "Static" then
---             yaw_override = 0
---         elseif yaw_settings == "Random" then
---             yaw_override = math.random(-179,179)
---         elseif yaw_settings == "Side-Way" then
---             if (math.floor(globals.curtime * 100000) % 2) == 0 then
---                 yaw_override = 89
---             else
---                 yaw_override = -90
---             end
---         elseif yaw_settings == "Spin" then
---             yaw_override = (globals.curtime * Spin_Speed) % 360 - 180
---         end
-        
---         if exploit_state ~= 0 then -- GetSelectedWeapons(csgo_weapons(localplayer:get_player_weapon()).name, menu.Standing_Weapons)
---             rage.antiaim:override_hidden_pitch(pitch_override)
---             rage.antiaim:override_hidden_yaw_offset(yaw_override)
---             Main.Main_Anti_Defensive.main.lag_options:override("Always On")
---             rage.exploit:allow_defensive(true)
---         end
---     else
---         -- ui.find("Aimbot", "Anti Aim", "Angles", "Pitch"):override()
---         Main.Main_Anti_Defensive.main.hidden:override()
---         Main.Main_Anti_Defensive.main.fs:override()
---         Main.Main_Anti_Defensive.main.lag_options:override()
---         rage.exploit:allow_defensive(false)
---     end
--- end
-
 
 
 local width, height = render.screen_size().x, render.screen_size().y
@@ -2368,10 +2798,6 @@ local function PlayerZoomed()
     
     return false
 end
-
-local function clamp(v, min, max) local num = v; num = num < min and min or num; num = num > max and max or num; return num end
-local function linear(t, b, c, d) return c * t / d + b end
-local m_alpha = 0
 
 local function draw_scope_lines()
 
@@ -2449,13 +2875,62 @@ local function draw_scope_lines()
 end
 
 
+ui.sidebar(Main.helpers.gradient_text(200, 171, 255, 255, 90, 124, 190, 255, Main.script_db.lua_name), 'user-shield')
+
+-- common.add_notify("Hello, " .. common.get_username() .. "!","\aFFFFFFFFWelcome back to "..Main.script_db.lua_name.."!")
+
 if not _G.Sesion_Time then
     _G.Sesion_Time = 0
 end
 
+-- Setup_welcome:label("\aFFFFFFFFBuild \a858585FF» \aFCCDFFFF" ..script_db.lua_version)
 Setup_welcome:label("Welcome, "..Main.helpers.RGBToColorString(Main.script_db.username, color(130, 95, 208, 255)).. "!") --\aA9ACFFFF
-Setup_welcome:label(Main.script_db.lua_name.." "..Main.helpers.RGBToColorString(Main.script_db.lua_version, color(130, 95, 208, 255)).. " Live Build")
-local SesionTime = Setup_welcome:label("Session Time: ".._G.Sesion_Time.. " ")
+Setup_welcome:label(Main.script_db.lua_name.." » "..Main.helpers.RGBToColorString(Main.script_db.lua_version, color(130, 95, 208, 255)).. " Live Build")
+local SesionTime = Setup_welcome:label("Session Time » " .. _G.Sesion_Time .. " ")
+
+Setup_Updates:label([[
+]]..Main.helpers.gradient_text(200, 171, 255, 255, 90, 124, 190, 255, "Update Log! [Version ".. Main.script_db.script_version.."]")..[[
+
+
+- Updated Anti-Aim
+- Added Anti-Head
+- Fixed Som visuals
+- Fixed Clan Tag
+- Added Viewmodel Changer
+- Added Debug Mode
+- Added Silent Shots
+- Added Manual AA
+- Updated Watermark
+
+- To do List
+    - Better Visuals
+    - Hit marker
+    - Hit logs
+
+]])
+
+
+local function FormatTime(seconds)
+    local timeString = ""
+    
+    if seconds < 60 then
+        timeString = seconds .. " "
+    elseif seconds < 3600 then
+        local minutes = math.floor(seconds / 60)
+        local sec = seconds % 60
+        timeString = minutes .. " min" .. (sec > 0 and (" " .. sec .. " ") or "")
+    elseif seconds < 86400 then
+        local hours = math.floor(seconds / 3600)
+        local minutes = math.floor((seconds % 3600) / 60)
+        timeString = hours .. " hour" .. (hours > 1 and "s" or "") .. (minutes > 0 and (" " .. minutes .. " min") or "")
+    else
+        local days = math.floor(seconds / 86400)
+        local hours = math.floor((seconds % 86400) / 3600)
+        timeString = days .. " day" .. (days > 1 and "s" or "") .. (hours > 0 and (" " .. hours .. " hour" .. (hours > 1 and "s" or "")) or "")
+    end
+    
+    return timeString
+end
 
 local function Update_SesionTime()
     wait({
@@ -2464,10 +2939,9 @@ local function Update_SesionTime()
         Number=0.008,
         callback = function()
             _G.Sesion_Time = _G.Sesion_Time + 1
-            SesionTime:name("Sesion Time: ".._G.Sesion_Time.. " ")
+            SesionTime:name("Session Time » " .. FormatTime(_G.Sesion_Time))
         end
     })
-
 end
 
 -- local DDS = Setup_welcome:button("       Discord       ")
@@ -2495,22 +2969,22 @@ local confirm_cfg_creation = cfgsys:button(" Confirm CFG "):visibility(false)
 
 local CFG_Data_Switch = cfgsys:switch("Load Clean"):visibility(false)
 
-local CFG_load = cfgsys:button(ui.get_icon('check').."     Load Config     ")
-local CFG_save = cfgsys:button(ui.get_icon('floppy-disk').."      Save Config      ")
-local export_cfg = cfgsys:button(ui.get_icon('upload').."   Export Config    ")
-local import_cfg = cfgsys:button(ui.get_icon('download').."  Import Config   ")
+local CFG_load = cfgsys:button(ui.get_icon('check').."     Load Config     "):tooltip("Will load the selected config\n\n"..Main.helpers.RGBToColorString("This will override any unsaved settings.", color(50, 25, 255, 255)))
+local CFG_save = cfgsys:button(ui.get_icon('floppy-disk').."      Save Config      "):tooltip("Will save the settings to the selected config.")
+local export_cfg = cfgsys:button(ui.get_icon('upload').."   Export Config    "):tooltip("Config will be coppied to your clipboard.")
+local import_cfg = cfgsys:button(ui.get_icon('download').."  Import Config   "):tooltip(ui.get_icon("triangle-exclamation").."This will override the current config! \n\n"..Main.helpers.RGBToColorString("Make a new config if needed", color(50, 25, 255, 255)))
 
-local CFG_delete = cfgsys:button(ui.get_icon('trash'))
+local CFG_delete = cfgsys:button(ui.get_icon('trash')):tooltip(ui.get_icon("triangle-exclamation").." Deleted Selected Config This will add a extra check before deleting.")
 local CFG_ConfirmDeletion_Yes = cfgsys:button(ui.get_icon('check')):visibility(false)
 local CFG_ConfirmDeletion_No = cfgsys:button(" X "):visibility(false)
 
 
 local function decode(data)
-    return Base64:decode(data)
+    return Base64.decode(data)
 end
 
 local function encode(data)
-    return Base64:encode(data)
+    return Base64.encode(data)
 end
 
 
@@ -2518,12 +2992,12 @@ local Base64_Decode = cfgsys:button(ui.get_icon('code')):tooltip('Decode')
 local Base64_Encode = cfgsys:button(ui.get_icon('upload')):tooltip('Encode')
 
 Base64_Decode:set_callback(function()
-clipboard.set(decode(clipboard.get()))
+clipboard.set(clipboard.get())
 common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Successfully Decoded!")
 end, false)
 
 Base64_Encode:set_callback(function()
-clipboard.set(encode(clipboard.get()))
+clipboard.set(clipboard.get())
 common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Successfully encoded!")
 end, false)
 
@@ -2543,31 +3017,51 @@ function GetCFGS(id)
 end
 
 local function GetCFG()
-    clipboard.set(files.read(Configs_Path.."\\"..GetCFGS(Configs:get())..".lua"))
+    clipboard.set(encode(files.read(Configs_Path.."\\"..GetCFGS(Configs:get())..".lua")))
 end
+
+
 
 function config_load(text, is_import, CFN)
     local CFN = CFN or ''
     local is_import = is_import or false
     local config_load_func = {}
-    local startsWithFlux = string.match(text, "^Flux_") ~= nil
-    if startsWithFlux then
-        config_load_func.state = true
-    else
-        config_load_func.state = false
-        common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Something went wrong!")
+    config_load_func.state = true
+    local text = text
+
+    if text:sub(1, 8) ~= "--Mang0 " then
+        common.add_notify(
+            "Config ~ Error",
+            Main.helpers.RGBToColorString("Invalid config: Missing --Mang0 tag.", color(255, 50, 25, 255))
+        )
+        error("Invalid config: Missing --Mang0 tag.")
+        return nil
     end
 
     if config_load_func.state then
-            if is_import == true then
-                common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), " New Config Has been imported to "..Main.helpers.RGBToColorString(GetCFGS(Configs:get()), color(122,122,255,255)))
-            elseif is_import == 'NONE' then
-                common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), Main.helpers.RGBToColorString(CFN, color(122,122,255,255)).." New Config!")
-            elseif is_import == false then
-                common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), Main.helpers.RGBToColorString(GetCFGS(Configs:get()), color(122,122,255,255)).." has been Loaded!")
-            end
-        local text = decode(text:gsub("Flux_", ""))
-        local cfg_data = json.parse(text)
+        if is_import == true then
+            common.add_notify(
+                Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155, 155, 255, 255)),
+                "New Config Has been imported to " ..
+                Main.helpers.RGBToColorString(GetCFGS(Configs:get()), color(122, 122, 255, 255))
+            )
+        elseif is_import == 'NONE' then
+            common.add_notify(
+                Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155, 155, 255, 255)),
+                Main.helpers.RGBToColorString(CFN, color(122, 122, 255, 255)) .. " New Config!"
+            )
+        elseif is_import == false then
+            common.add_notify(
+                Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155, 155, 255, 255)),
+                Main.helpers.RGBToColorString(GetCFGS(Configs:get()), color(122, 122, 255, 255)) .. " has been Loaded!"
+            )
+        end
+
+        -- Decode the config text
+        local decoded_text = Base64.decode(text)
+        local cfg_data = json.parse(decoded_text)
+        
+        -- If decoding and parsing were successful, load the config
         if cfg_data ~= nil then
             for key, value in pairs(cfg_data) do
                 local item = Main.Items[key]
@@ -2576,17 +3070,15 @@ function config_load(text, is_import, CFN)
                     item:set(invalue)
                 end
             end
+        else
+            error("Failed to load config: Invalid data format.")
         end
     end
+
     return config_load_func
 end
 
-local Clean_Cfg = [[Flux_-- Obfuscated by Mana64 
-
-return function() eyIxIjpmYWxzZSwiQWNjZW50IjoiOEVBNUU1RkYiLCJBbnRpX0JydXRlZm9yY2UiOmZhbHNlLCJBc3BlY3QgUmF0aW8iOmZhbHNlLCJCZXR0ZXIgRFQiOltdLCJCb2R5RnJlZXN0YW5kaW5nIjpmYWxzZSwiQ2xhbiBUYWciOmZhbHNlLCJDbGFuIFRhZyBTcGVlZCI6MC4wLCJDb25kaXRpb24gQUEiOiJHbG9iYWwiLCJDcm91Y2hpbmcgRXh0ZW5kZWQgQW5nZWxzIjpmYWxzZSwiQ3JvdWNoaW5nIEV4dGVuZGVkIFBpdGNoIjowLjAsIkNyb3VjaGluZyBFeHRlbmRlZCBSb2xsIjowLjAsIkNyb3VjaGluZyBMZWZ0IExpbWl0IjowLjAsIkNyb3VjaGluZyBPZmZzZXQiOjAuMCwiQ3JvdWNoaW5nIE9wdGlvbnMiOltdLCJDcm91Y2hpbmcgUmlnaHQgTGltaXQiOjAuMCwiQ3JvdWNoaW5nIFRpbWUgU3dpdGNoIjowLjAsIkNyb3VjaGluZyBZYXcgQWRkIC0gTGVmdCI6MC4wLCJDcm91Y2hpbmcgWWF3IEFkZCAtIFJpZ2h0IjowLjAsIkNyb3VjaGluZyBZYXcgQWRkIFR5cGUiOiJTdGF0aWMiLCJDcm91Y2hpbmcgWWF3IE1vZGlmaWVyIjoiRGlzYWJsZWQiLCJDcm91Y2hpbmdfRGVmZW5zaXZlIEFudGkgQWltIjpmYWxzZSwiQ3JvdWNoaW5nX1dlYXBvbnMiOltdLCJDcm91Y2hpbmdfcGl0Y2giOiJaZXJvIiwiQ3JvdWNoaW5nX3NwaW4iOjEyMC4wLCJDcm91Y2hpbmdfeWF3IjoiU3RhdGljIiwiQ3VzdG9tIENsYW4gVGFnIjpmYWxzZSwiQ3VzdG9tIENsYW4gVGV4dCI6IiIsIkN1c3RvbSBTbG93IFdhbGsiOmZhbHNlLCJDdXN0b20gVmlld21vZGVsIjpmYWxzZSwiQ3VzdG9tIG9uIGtpbGwiOmZhbHNlLCJETUMgSGl0Y2hhbmNlIjpmYWxzZSwiRGlzYWJsZVlhd01vZGlmaWVycyI6ZmFsc2UsIkR5bmFtaWMgSGl0Y2hhbmNlIFR5cGUiOiJkZWZlbnNpdmUiLCJFbmFibGUgQW50aSBBaW0iOmZhbHNlLCJFbmFibGUgQ3JvdWNoaW5nIjpmYWxzZSwiRW5hYmxlIEluIEFpciI6ZmFsc2UsIkVuYWJsZSBSdW5uaW5nIjpmYWxzZSwiRW5hYmxlIFN0YW5kaW5nIjpmYWxzZSwiRW5hYmxlIFdhbGtpbmciOmZhbHNlLCJGb3YiOjkwLjAsIkZyZWVzdGFuZGluZyI6ZmFsc2UsIkZyZWVzdGFuZGluZyBTdGF0aWMiOmZhbHNlLCJHbG9iYWwgRXh0ZW5kZWQgQW5nZWxzIjpmYWxzZSwiR2xvYmFsIEV4dGVuZGVkIFBpdGNoIjowLjAsIkdsb2JhbCBFeHRlbmRlZCBSb2xsIjowLjAsIkdsb2JhbCBMZWZ0IExpbWl0IjowLjAsIkdsb2JhbCBPZmZzZXQiOjAuMCwiR2xvYmFsIE9wdGlvbnMiOltdLCJHbG9iYWwgUmlnaHQgTGltaXQiOjAuMCwiR2xvYmFsIFRpbWUgU3dpdGNoIjo0LjAsIkdsb2JhbCBZYXcgQWRkIC0gTGVmdCI6MC4wLCJHbG9iYWwgWWF3IEFkZCAtIFJpZ2h0IjowLjAsIkdsb2JhbCBZYXcgQWRkIFR5cGUiOiJTdGF0aWMiLCJHbG9iYWwgWWF3IE1vZGlmaWVyIjoiRGlzYWJsZWQiLCJIaXRsb2dzIjpmYWxzZSwiSW5fQWlyIEV4dGVuZGVkIEFuZ2VscyI6ZmFsc2UsIkluX0FpciBFeHRlbmRlZCBQaXRjaCI6MC4wLCJJbl9BaXIgRXh0ZW5kZWQgUm9sbCI6MC4wLCJJbl9BaXIgTGVmdCBMaW1pdCI6MC4wLCJJbl9BaXIgT2Zmc2V0IjowLjAsIkluX0FpciBPcHRpb25zIjpbXSwiSW5fQWlyIFJpZ2h0IExpbWl0IjowLjAsIkluX0FpciBUaW1lIFN3aXRjaCI6MC4wLCJJbl9BaXIgWWF3IEFkZCAtIExlZnQiOjAuMCwiSW5fQWlyIFlhdyBBZGQgLSBSaWdodCI6MC4wLCJJbl9BaXIgWWF3IEFkZCBUeXBlIjoiU3RhdGljIiwiSW5fQWlyIFlhdyBNb2RpZmllciI6IkRpc2FibGVkIiwiSW5fQWlyX0RlZmVuc2l2ZSBBbnRpIEFpbSI6ZmFsc2UsIkluX0Fpcl9XZWFwb25zIjpbXSwiSW5fQWlyX3BpdGNoIjoiWmVybyIsIkluX0Fpcl9zcGluIjoxMjAuMCwiSW5fQWlyX3lhdyI6IlN0YXRpYyIsIklucCAxIjoibmV2ZXJsb3NlLmNjL21hcmtldC9pdGVtP2lkPUxNYVc2WCIsIklucCAyIjoiR2V0IEZsdXgtWWF3ISBuZXZlcmxvc2UuY2MvbWFya2V0L2l0ZW0/aWQ9TE1hVzZYIiwiSW5wIDMiOiJIb3dkeSBnZXQgMSBpbiB5b3UgYnV0IiwiSnVtcCBTY291dCBGaXgiOmZhbHNlLCJLZXlCaW5kcyI6W10sIkxpbmsgRFQgSGl0Y2hhbmNlIjp0cnVlLCJNYWluIFBpdGNoIjoiRG93biIsIk1heF9CcnV0ZWZvcmNlIjowLjAsIk1pbl9CcnV0ZWZvcmNlIjowLjAsIk5vIEZhbGwgRGFtYWdlIjpmYWxzZSwiUmFuZG8gRmxpY2siOmZhbHNlLCJSYW5kbyBGbGljayBUaW1lIjowLjAsIlJhbmRvbSBGYWtlIExhZyIUmVsYXkgc2hhdCMxNzYgKDEyMS40Ni4yMjUuMTQ6MjcwMjgpIGlzIGdvaW5nIG9mZmxpbmUgaW4gNDgxIHNlY29uZHMNClRlbGxpbmcgU3RlYW0gaXQgaXMgc2FmZSB0byB1cGRhdGUgdGhlIGFwcA0KLS0tIE1pc3NpbmcgVmd1aSBtYXRlcmlhbCB2Z3VpLy4uXHZndWlcbWFwc1xtZW51X3RodW1iX2RlZmF1bHQNCi0tLSBNaXNzaW5nIFZndWkgbWF0ZXJpYWwgdmd1aS8uLlx2Z3VpXG1hcHNcbWVudV90aHVtYl9kZWZhdWx0X2Rvd25sb2FkDQpIb3N0X1dyaXRlQ29uZmlndXJhdGlvbjogV3JvdGUgY2ZnL2NvbmZpZy5jZmcNCi0tLSBNaXNzaW5nIFZndWkgbstring.lowerWF0ZXJpYWwgdmd1aS8uLi92Z3VpL2ljb25fY29uX21lZGl1bS52bXQNClBpbmcgbWVhc3Vio.writeyZW1lbnQgY29tcGxldGVkDQpQaW5nIGxvY2F0aW9uOiBhbXM9MTMrMSxzdG89MTMrMSxzdG8yPTEzKzEsbXN0MT0xNCsxLGZyYT0yMSsyLzE3KzEsbWx4MT0xOstring.upperdebug.getinfoCsxLGxocj0zNCszLzE4KzEsd2F3PTIxKzIscGFyPTM1KzMvMjMrMSxpYWQ9MTAxKzEwLzEwMSsxLHNncD0xOTArMTkvMTkyKzE1LGdydT0yMDUrMjANClNEUiBSZWxheU5ldHdvcmtTdGF0dXM6io.openICBhdmFpbD1PSyAgY29uZmlnPU9LICBhbnlyZWxheT1PSyAgIChPSykNCkNoYW5nZUdhbWVVSVN0Ystring.reverseXRlOiBDU0dPX0dBTUVfVUlfU1RBVEVfSU5Umath.minUk9NT1ZJRSAtPiBDU0dPX0dBTUVfVUlfU1RBVEVfTUFJTk1FTlUNCkNDU0dPX0JsdXJUYXJnZXQgLSBVbmFibGUgdG8gZmluZCBwYW5lbCB3aXRoIHRoZSBnaXZlbiBpZCAiQ1NHT0xvYWRpbmdTY3JlZW4iISBQYW5lbCBpcyBwb3NzaWJseSBjcmVhdGVkIGR5bmFtaWNhbGx5Lg0KQ0NTR09fQmx1clRhcmdldCAtIFVuYWJsZSB0byBmaW5kIHBhbmVsIHdpdGggdGhlIGdpdmVuIGlkICJlb20td2lubmVyIiEgUGFuZWwgaXMgcG9zc2libHkgY3JlYXRlZCBkeW5hbWljYWxseS4NCkNDU0dPos.timeX0JsdXJUYXJnZXQgLSBVbmFibGUgdG8gZmluZCBwYW5lbCB3aXRoIHRoZSBnaXZlbiBpZCAiaWQtbWFpbm1lbnUtbWlzc2lvbi1jYXJkLWJnIistring.table.unpackrepEgUGFuZWwgaXMgcG9zc2libHkgY3JlYXRlZCBkeW5hbWljYWxseS4NCkNDU0dPX0JsdXJUYXJnZXQgLSBVbmFibGUgdG8gZmluZCBmath.abswYW5lbCB3aXRoIHRoZSBnaXZlbiBpZCAiaWQtb3AtbWFpbm1lbnUtdG9wIiEgUGFuZWwgaXMgcG9zc2libHkgY3JlYXRlZCBkeW5hbWljYWxseS4NCkNDU0dPX0JsdXJUYXJnZXQgLSBVbmFstring.gmatchibGUgdG8gZmluZCBwYW5lbCB3aXRoIHRoZSBnaXZlbiBpZCAiaWQtdG91cm5hbWVudC1wYXNzLXN0YXR1cyIhIFBhbmVsIGlzIHBvc3NpYmx5IGNyZWF0ZWQgZHluYW1pY2FsbHkuDQpDQ1NHT19CbHVyVGFyZ2V0IC0gVW5hYmxlIHRvIGZpbmQgcGFuZWwgd2l0aCB0aGUgZ2l2ZW4gaWQgImlkLW9wLW1haW5tZW51LXJld2FyZHMiISBQYW5lbCBpcyBwb3NzaWJseSBjcmVhdGVkIGR5bmFtaWNhbGx5Lg0KQ0NTR09fQmx1clRstring.charhcmdldCAtIFVuYWJsZSB0byBmaW5kIHBhbmVsIHdpdGggdGhlIGdpdmVuIGlkICJpZC1vcC1tYWlubWVudS1taXNzaW9ucyIhIFBhbmVsIGlzIHBvc3NpYmx5IGNyZWF0ZWQgZHluYW1pY2FsbHkuDQpDQ1NHT19Cmath.sinbHVyVGFyZ2V0IC0gVW5hYmxlIHRvIGZpbmQgcGFuZWwgd2l0aCB0aGUgZ2l2ZW4gaWQgtable.removeImlkLWFjdGstring.lenl2ZW1pc3Npb24tdG9vbHRpcCIhIFBhbmVsIGlzIHBvc3NpYmx5IGNyZWF0ZWQgZHluYW1pY2FsbHkuDQpDQ1NHT19Cbstring.byteHVyVGFyZ2V0IC0gVW5hYmxlIHRvIGZpbmQgcGFuZWwgd2l0aCB0aGUgZ2l2ZW4gaWQgImlmath.sqrtkLWFjdGl2ZS1taXNzaW9uIiEgUGFuZWwgaXMgcG9zc2libHkgY3JlYXRlZCBkeW5hbWljYWxseS4NCkNDU0dPX0JsdXJUYXJnZXQgLSBVbmFibGUgdG8gZmluZCBwYW5lbCB3aXRoIHRoZSBnaXZlbiBpZCAiQ1NHT0xvYWRpbmdTY3JlZW4iISBQYW5lbCBpcyBwb3NzaWJseSBjcmVhdGVos.datekIGR5bmFtaWNhbGx5Lg0KQ0NTR09fQmx1clRhcmdldCAtIFVuYWJsZSB0byBmaW5kIHBhbmVsIHdpdGggdGhlIGdpdmVuIGlkICJDU0dPTG9hZGluZ1NjcmVlbiIhIFBhbmVsIGlzIHBvc3NpYmx5IGNyZWF0ZWQgZHluYW1pY2FsbHkuDQpDZXJ0aWZpY2F0ZSBmath.ceilleHBpcmVzIGluIDIyaDIwbSBhdstring.subCAxNjk1MjkxOTMzICstring.findhjdXJyZW50math.cosIHRpbWUgMTY5NTIxMTmath.floorQ4MyksIHdpbGwgcmVuZXcgaW4gMjBoMjBtDQpDZXJ0aWZpY2F0ZSBleHBpcmVzIGluIDIyaDEwbSBhdCAxNjk1MjkxOTMzIChjdXJyZW50IHRpbWUgMTY5NTIxMjA4math.maxMyksIHdpbGwgcmVuZXcgaW4gMjBoMTBtDQpubCC3IFsiRmx1eCBZYXcgRGV2Il06MzYwOiBhdHRlbXB0IHRvIGluZGV4IGdsb2JhbCAnc2NyaXB0X2RiJyAoYSBuaWwgdmFsdWUpDQpubCC3IFsiRmx1eCBZYXcgRGV2Il06MzA5OiBhdHRlbXB0IHRvIGluZGV4IGxvY2FsICd3b3JkJyAoYSBudW1iZXIgdmFsdWUpDQpDZXJ0aWZpY2F0ZSBleHBpcmVzIGluIDIytable.concataDAwbSBhdCAxNjk1MjkxOTMzIChtable.insertjdXJyZW50IHRpbWUgMTY5NTIxMtable.packjY4MyksIHdpbGwgcmVuZXcgaW4gMjBcoroutine.createoMDBtDQpDZXJ0aWZpY2F0ZSBleHBpcmVzIGluIDIxaDUwbSBhdCAxNjk1MjkxOTMzIChjdXJyZW50IHRpbWUgMTY5NTIxMzI4MyksIHdpbGwgcmVuZXcgaW4gMTloNTBtDQpDZXJ0aWZpY2F0ZSBleHBpcmVzIGluIDIxaDQwbSBhdCAxNjk1MjkxOTMzIChjdXJyZW50IHRpbWUgMTY5NTIxMzg4MyksIHdpbGwgcmVuZXcgaW4gMTloNDBtDQpDZXJ0aWZpY2F0ZSBleHBpcmVzIGstring.formatluIDIxcoroutine.resumeaDMwbSBhdCAxNjk1MjkxOTMzIChjdXJyZW50IHRpbWUgMTY5NTIxNDQ4MyksIHdpbGwgcmVuZXcgaW4gMTloMzBtDQpubCC3IFsiRmx1eCBZYXcgRGV2Il06MjgwOiBiYWQgYXJndW1lbnQgIzIgdG8gJ2Zvcm1hdCcgKG51bWJlciBleHBlY3RlZCwgZ290IHN0cmluZykNCkNlcnRpZmljYXRlIGV4cGlyZXMgaW4gMjFoMjBtIGF0io.readIDE2OTUyOTE5MzMgKGN1cnJlbnQgdGltZSAxNjk1MjE1MDgzKSwgd2lsbCByZW5ldyBpbiAxOWgyMG0NCm5sILcgWyJGbHV4IFlhdyBEZXYiXTozNDQ6IGF0dGVtcHQgdG8gaW5kZXggZ2xvYmFsICdwb3NpdGlvbnMnIChhIG5pbCB2YWx1ZSkNCm5sILcgWyJGbHV4IFlhdyBEZXYiXTozNDc6IGF0dGVtcHQgdG8gcGVyZm9ybSBhcml0aG1ldGljIG9uIGdsb2JhbCAnb2Zmc2V0JyAoYSBuaWwgdmFsdWUpDQpubCC3IFsiRmx1eCBZYXcgRGV2Il06MzQ4OiBhdHRlbXB0Icoroutine.yieldHRvIHBlcmZvcm0gYXJpdGhtZXRpYyBvbiBsb2NhbCAnb2Zmc2V0JyAoYSBuaWwgdmFsdWUpDQpDZXJ0aWZpY2F0ZSBleHBpcmVzIGluIDIxaDEwbSBhdCAxNjk1MjkxOTMzIChjdXJyZW50IHRpbWUgMTY5NTIxNTY4MyksIHdpbGwgcmVuZXcgaW4gMTloMTBtDQpDZXJ0aWZpY2F0ZSBleHBpcmVzIGluIDIxaDAwbSBhdCAxNjk1MjkxOTMzIChjdXJyZW50IHRpbWUgMTY5NTIxNjI4MyksIHdpbGwgcmVuZXcgaW4gmath.tanMTloMDBttable.sort6ZmFsc2UsIlJ1bm5pbmcgRXh0ZW5kZWQgQW5nZWxzIjpmYWxzZSwiUnVubmluZyBFeHRlbmRlZCBQaXRjaCI6MC4wLCJSdW5uaW5nIEV4dGVuZGVkIFJvbGwiOjAuMCwiUnVubmluZyBMZWZ0IExpbWl0IjowLjAsIlJ1bm5pbmcgT2Zmc2V0IjowLjAsIlJ1bm5pbmcgT3B0aW9ucyI6W10sIlJ1bm5pbmcgUmlnaHQgTGltaXQiOjAuMCwiUnVubmluZyBUaW1lIFN3aXRjaCI6MC4wLCJSdW5uaW5nIFlhdyBBZGQgLSBMZWZ0IjowLjAsIlJ1bm5pbmcgWWF3IEFkZCAtIFJpZ2h0IjowLjAsIlJ1bm5pbmcgWWF3IEFkZCBUeXBlIjoiU3RhdGljIiwiUnVubmluZyBZYXcgTW9kaWZpZXIiOiJEaXNhYmxlZCIsIlJ1bm5pbmdfRGVmZW5zaXZlIEFudGkgQWltIjp0cnVlLCJSdW5uaW5nX1dlYXBvbnMiOltdLCJSdW5uaW5nX3BpdGNoIjoiWmVybyIsIlJ1bm5pbmdfc3BpbiI6MTIwLjAsIlJ1bm5pbmdfeWF3IjoiU3RhdGljIiwiU0VMIEJpbmRzX0xvZ3MiOiJGbHV4LVlhdyIsIlN0YW5kaW5nIEV4dGVuZGVkIEFuZ2VscyI6ZmFsc2UsIlN0YW5kaW5nIEV4dGVuZGVkIFBpdGNoIjowLjAsIlN0YW5kaW5nIEV4dGVuZGVkIFJvbGwiOjAuMCwiU3RhbmRpbmcgTGVmdCBMaW1pdCI6MC4wLCJTdGFuZGluZyBPZmZzZXQiOjAuMCwiU3RhbmRpbmcgT3B0aW9ucyI6W10sIlN0YW5kaW5nIFJpZ2h0IExpbWl0IjowLjAsIlN0YW5kaW5nIFRpbWUgU3dpdGNoIjowLjAsIlN0YW5kaW5nIFlhdyBBZGQgLSBMZWZ0IjowLjAsIlN0YW5kaW5nIFlhdyBBZGQgLSBSaWdodCI6MC4wLCJTdGFuZGluZyBZYXcgQWRkIFR5cGUiOiJTdGF0aWMiLCJTdGFuZGluZyBZYXcgTW9kaWZpZXIiOiJEaXNhYmxlZCIsIlN0YW5kaW5nX0RlZmVuc2l2ZSBBbnRpIEFpbSI6dHJ1ZSwiU3RhbmRpbmdfV2VhcG9ucyI6W10sIlN0YW5kaW5nX3BpdGNoIjoiWmVybyIsIlN0YW5kaW5nX3NwaW4gc3BlZWQiOjEyMC4wLCJTdGFuZGluZ195YXciOiJTdGF0aWMiLCJTdGF0ZSI6W10sIlN1cHBvcnQgTWUiOmZhbHNlLCJTd2l0Y2hpbmcgRmFrZWxhZyI6ZmFsc2UsIlRpbWUgUmFuZCI6MC4wLCJUaW1lIFN3aXRjaCI6MC4wLCJWYWx1ZSI6MC4wLCJWYWx1ZTEiOjAuMCwiVmFsdWUyIjowLjAsIldhbGsgU3BlZWQiOjAuMCwiV2Fsa2luZyBFeHRlbmRlZCBBbmdlbHMiOmZhbHNlLCJXYWxraW5nIEV4dGVuZGVkIFBpdGNoIjowLjAsIldhbGtpbmcgRXh0ZW5kZWQgUm9sbCI6MC4wLCJXYWxraW5nIExlZnQgTGltaXQiOjAuMCwiV2Fsa2luZyBPZmZzZXQiOjAuMCwiV2Fsa2luZyBPcHRpb25zIjpbXSwiV2Fsa2luZyBSaWdodCBMaW1pdCI6MC4wLCJXYWxraW5nIFRpbWUgU3dpdGNoIjowLjAsIldhbGtpbmcgWWF3IEFkZCAtIExlZnQiOjAuMCwiV2Fsa2luZyBZYXcgQWRkIC0gUmlnaHQiOjAuMCwiV2Fsa2luZyBZYXcgQWRkIFR5cGUiOiJTdGF0aWMiLCJXYWxraW5nIFlhdyBNb2RpZmllciI6IkRpc2FibGVkIiwiV2Fsa2luZ19EZWZlbnNpdmUgQW50aSBBaW0iOmZhbHNlLCJXYWxraW5nX1dlYXBvbnMiOltdLCJXYWxraW5nX3BpdGNoIjoiWmVybyIsIldhbGtpbmdfc3BpbiI6MTIwLjAsIldhbGtpbmdfeWF3IjoiU3RhdGljIiwiV2F0ZXJtYXJrIjpmYWxzZSwiWCI6MC4wLCJZIjoyLjAsIllhdyBCYXNlIjoiQmFja3dhcmQiLCJaIjowLjAsImZpeCBuYWRlIjpmYWxzZSwibWluIHZhbHVlIjowLjB9 end) 
-
-
-]]
+local Clean_Cfg = [[{}]]
 
 local function Create_CFG(state)
     local new_data = {}
@@ -2607,8 +3099,8 @@ local function Create_CFG(state)
         
     if state == false then
         local json_config = json.stringify(cfg_data)
-        local encoded_config = encode(json_config)
-        files.write(Configs_Path.."\\"..CFG_Name:get()..".lua", "Flux_"..encoded_config)
+        local encoded_config = json_config --encode(json_config)
+        files.write(Configs_Path.."\\"..CFG_Name:get()..".lua", encoded_config)
     else
         -- local json_config = json.stringify(cfg_data)
         -- local encoded_config = encode(json_config)
@@ -2642,8 +3134,8 @@ local function config_save()
     end
 
     local json_config = json.stringify(cfg_data)
-    local encoded_config = encode(json_config)
-    files.write(Configs_Path.."\\"..GetCFGS(Configs:get())..".lua", "Flux_"..encoded_config)
+    local encoded_config = json_config --encode(json_config)
+    files.write(Configs_Path.."\\"..GetCFGS(Configs:get())..".lua", encoded_config)
     Configs:update(json.parse(files.read(Config_Data)))
     common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Saved Config to "..Main.helpers.RGBToColorString(GetCFGS(Configs:get()), color(122,122,255,255)))
 end
@@ -2725,6 +3217,9 @@ local function KillSay(e)
     end
 end
 
+
+Main.Items.Aspect_Ratio = Main.Tabs.Misc:slider("Aspect Ratio", 0, 60, 0, 1)
+
 function Main_CM(cmd)
     no_fall_damage(cmd)
     Randomize_DT_Ticks(cmd)
@@ -2734,19 +3229,23 @@ function Main_CM(cmd)
     fix_nade()
     AntiAim_createmove(cmd)
     fix_fakeduck()
-    -- hk_create_move(cmd)
-    -- frametime = globals.frametime
+    Rand_Multipoint()
+    manual_aa()
+    Enemy_Anti_Head()
     cvar.r_aspectratio:float(Main.Items.Aspect_Ratio:get() / 10)
 end
 
 function Main_Render(cmd)
-    -- updateWaits()
-    Watermark(cmd)
+    Main.visuals.watermark.draw()
     draw_scope_lines()
     Visibility_easy()
     Visuals_Indicator()
     Update_SesionTime()
+    debug_mode()
+    viewmodel()
+    clantag.run()
     -- Clan_tag()
+    -- window_title()
 end
 
 
@@ -2763,3 +3262,8 @@ events.aim_ack:set(function(e)
     KillSay(e)
 end)
 
+once_callback = function()
+    always_choke_slient_shots()
+end
+
+once_callback()
