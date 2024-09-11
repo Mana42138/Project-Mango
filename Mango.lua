@@ -96,11 +96,10 @@ end
 local urlmon = ffi.load 'UrlMon'
 local wininet = ffi.load 'WinInet'
 
-local Base64 = {}
 
-Base64.code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+Main_Mango_Table.code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
-Base64.encode = function(data)
+function Main_Mango_Table:encode(data)
     return "--Mang0 " .. ( ( data:gsub( '.', function( x )
         local r, b='', x:byte(  )
         for i = 8, 1, -1 do r = r .. ( b%2 ^ i - b%2 ^ ( i - 1 ) > 0 and '1' or '0' ) end
@@ -109,19 +108,19 @@ Base64.encode = function(data)
         if ( #x < 6 ) then return '' end
         local c = 0
         for i = 1, 6 do c = c + ( x:sub( i, i ) == '1' and 2 ^ ( 6 - i ) or 0 ) end
-        return Base64.code:sub( c + 1, c + 1 )
+        return Main_Mango_Table.code:sub( c + 1, c + 1 )
     end) .. ( { '', '==', '=' } )[ #data%3 + 1 ] )
 end
 
-Base64.decode = function(data)
+function Main_Mango_Table:decode(data)
     if data:sub(1, 8) == "--Mang0 " then
         data = data:sub(9)
     end
 
-    data = string.gsub( data, '[^' .. Base64.code .. '=]', '' )
+    data = string.gsub( data, '[^' .. Main_Mango_Table.code .. '=]', '' )
     return ( data:gsub( '.', function( x )
         if ( x == '=' ) then return '' end
-        local r, f = '', ( Base64.code:find( x ) - 1 )
+        local r, f = '', ( Main_Mango_Table.code:find( x ) - 1 )
         for i = 6, 1, -1 do r = r .. ( f%2 ^ i - f%2 ^ ( i - 1 ) > 0 and '1' or '0' ) end
         return r
     end ):gsub( '%d%d%d?%d?%d?%d?%d?%d?', function( x )
@@ -2997,25 +2996,17 @@ local CFG_ConfirmDeletion_Yes = cfgsys:button(ui.get_icon('check')):visibility(f
 local CFG_ConfirmDeletion_No = cfgsys:button(" X "):visibility(false)
 
 
-function Main_Mango_Table:decode(data)
-    return Base64.decode(data)
-end
-
-function Main_Mango_Table:encode(data)
-    return Base64.encode(data)
-end
-
-
 local Base64_Decode = cfgsys:button(ui.get_icon('code')):tooltip('Decode')
 local Base64_Encode = cfgsys:button(ui.get_icon('upload')):tooltip('Encode')
 
 Base64_Decode:set_callback(function()
-clipboard.set(clipboard.get())
+clipboard.set(Main_Mango_Table:decode(clipboard.get()))
 common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Successfully Decoded!")
 end, false)
 
 Base64_Encode:set_callback(function()
-clipboard.set(clipboard.get())
+    print("lalalalal")
+clipboard.set(Main_Mango_Table:encode(clipboard.get()))
 common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Successfully encoded!")
 end, false)
 
@@ -3076,7 +3067,7 @@ function Main_Mango_Table:config_load(text, is_import, CFN)
         end
 
         -- Decode the config text
-        local decoded_text = Base64.Main_Mango_Table:decode(text)
+        local decoded_text = Main_Mango_Table:decode(text)
         local cfg_data = json.parse(decoded_text)
         
         -- If decoding and parsing were successful, load the config
@@ -3096,7 +3087,7 @@ function Main_Mango_Table:config_load(text, is_import, CFN)
     return config_load_func
 end
 
-local Clean_Cfg = [[{}]]
+local Clean_Cfg = [[--Mang0 ]]
 
 function Main_Mango_Table:Create_CFG(state)
     local new_data = {}
@@ -3150,9 +3141,9 @@ function Main_Mango_Table:config_save()
             cfg_data[i] = ui_value
         end
     end
-
+    
     local json_config = json.stringify(cfg_data)
-    local encoded_config = json_config --Main_Mango_Table:encode(json_config)
+    local encoded_config = Main_Mango_Table:encode(json_config)
     files.write(Configs_Path.."\\"..Main_Mango_Table:GetCFGS(Configs:get())..".lua", encoded_config)
     Configs:update(json.parse(files.read(Config_Data)))
     common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Saved Config to "..Main.helpers.RGBToColorString(Main_Mango_Table:GetCFGS(Configs:get()), color(122,122,255,255)))
