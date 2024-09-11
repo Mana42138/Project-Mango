@@ -4,16 +4,17 @@ function Test:pr(pprint)
     pprint("script_is_ready")
 end
 
-function Test:dev(files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_, clipboard, csgo_weapons, Options)
-local files, color, common, cvar, entity, esp, events, globals, json, materials, math, ui, network, panorama, rage, render, utils, vector, csgo_weapons = files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_, csgo_weapons
-
-local gradient = Options.gradient
-local drag_system = Options.drag_system
-local MTools = Options.MTools
-local vmt_hook = Options.vmt_hook
-local pui = Options.pui
-local ffi = Options.ffi
-
+function Test:dev(files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_, Options)
+    local files, color, common, cvar, entity, esp, events, globals, json, materials, math, ui, network, panorama, rage, render, utils, vector = files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_
+    
+    local gradient = Options.gradient
+    local drag_system = Options.drag_system
+    local MTools = Options.MTools
+    local vmt_hook = Options.vmt_hook
+    local pui = Options.pui
+    local ffi = Options.ffi
+    local csgo_weapons = Options.csgo_weapons
+    local clipboard = Options.clipboard
 
 files.create_folder('nl\\Mango')
 
