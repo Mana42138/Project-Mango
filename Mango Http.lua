@@ -4,8 +4,9 @@ function Test:pr(pprint)
     pprint("script_is_ready")
 end
 
-function Test:dev(files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_, Options)
-    local files, color, common, cvar, entity, esp, events, globals, json, materials, math, ui, network, panorama, rage, render, utils, vector = files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_
+function Test:dev(files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_, Options_)
+    local Main_Mango_Table = {}
+    local files, color, common, cvar, entity, esp, events, globals, json, materials, math, ui, network, panorama, rage, render, utils, vector, Options = files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_, Options_
     
     local gradient = Options.gradient
     local drag_system = Options.drag_system
@@ -42,7 +43,7 @@ local Config_Data = 'nl\\Mango\\configs.json'
 -- local Base64_ = require ('Mango\\modules\\noluck')
 
 
--- local ffi = require("ffi")
+local ffi = require("ffi")
 
 -- local clipboard = require('neverlose/clipboard')
 -- local csgo_weapons = require('neverlose/csgo_weapons')
@@ -78,13 +79,13 @@ local js = panorama.loadstring([[
     }
 ]])()
 
-local window_title = function()
-    local user32 = ffi.load("User32.dll")
-    local game_window_class = "Valve001" -- Don't move this
-    local game_window_title = "Counter-Strike: Global Offensive - Direct3D 9" -- And Thiz!
-    local new_title = "Mango.lua powerd by neverlose.cc | "..common.get_username().." [Live]"
-    user32.SetWindowTextA(user32.FindWindowA(game_window_class, new_title), game_window_title)
-end
+-- local window_title = function()
+--     local user32 = ffi.load("User32.dll")
+--     local game_window_class = "Valve001" -- Don't move this
+--     local game_window_title = "Counter-Strike: Global Offensive - Direct3D 9" -- And Thiz!
+--     local new_title = "Mango.lua powerd by neverlose.cc | "..common.get_username().." [Live]"
+--     user32.SetWindowTextA(user32.FindWindowA(game_window_class, new_title), game_window_title)
+-- end
 
 local Client_fps = function()
     local frametime = globals.frametime
@@ -95,11 +96,10 @@ end
 local urlmon = ffi.load 'UrlMon'
 local wininet = ffi.load 'WinInet'
 
-local Base64 = {}
 
-Base64.code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+Main_Mango_Table.code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
-Base64.encode = function(data)
+function Main_Mango_Table:encode(data)
     return "--Mang0 " .. ( ( data:gsub( '.', function( x )
         local r, b='', x:byte(  )
         for i = 8, 1, -1 do r = r .. ( b%2 ^ i - b%2 ^ ( i - 1 ) > 0 and '1' or '0' ) end
@@ -108,19 +108,19 @@ Base64.encode = function(data)
         if ( #x < 6 ) then return '' end
         local c = 0
         for i = 1, 6 do c = c + ( x:sub( i, i ) == '1' and 2 ^ ( 6 - i ) or 0 ) end
-        return Base64.code:sub( c + 1, c + 1 )
+        return Main_Mango_Table.code:sub( c + 1, c + 1 )
     end) .. ( { '', '==', '=' } )[ #data%3 + 1 ] )
 end
 
-Base64.decode = function(data)
+function Main_Mango_Table:decode(data)
     if data:sub(1, 8) == "--Mang0 " then
         data = data:sub(9)
     end
 
-    data = string.gsub( data, '[^' .. Base64.code .. '=]', '' )
+    data = string.gsub( data, '[^' .. Main_Mango_Table.code .. '=]', '' )
     return ( data:gsub( '.', function( x )
         if ( x == '=' ) then return '' end
-        local r, f = '', ( Base64.code:find( x ) - 1 )
+        local r, f = '', ( Main_Mango_Table.code:find( x ) - 1 )
         for i = 6, 1, -1 do r = r .. ( f%2 ^ i - f%2 ^ ( i - 1 ) > 0 and '1' or '0' ) end
         return r
     end ):gsub( '%d%d%d?%d?%d?%d?%d?%d?', function( x )
@@ -203,14 +203,14 @@ local image_draw = render.load_image(network.get("https://en.neverlose.cc/static
 
 Setup_welcome:texture(image_draw, vector(100, 100, 100), color(255,255,255, 255), "Image", 0) -- texture: ImgObject[, size: vector, color: color, mode: string, rounding: number]
 
-local Get_Enemy_Visible = function(entity, is_enemy, is_visible)
+function Main_Mango_Table:Get_Enemy_Visible(entity, is_enemy, is_visible)
     if entity:is_alive() and (entity:is_enemy() and is_enemy) and (entity:is_visible() and is_visible) then
         return true
     end
     return false
 end
 
-function normalize_yaw (angle)
+function Main_Mango_Table:normalize_yaw (angle)
     adjusted_yaw = angle;
 
     if adjusted_yaw < -180 then
@@ -264,7 +264,7 @@ local Main = {
 
 local Flags = {}
 
-local function wait(options)
+function Main_Mango_Table:wait(options)
     local time, flag, Number, callback = options.time, options.flag, options.Number, options.callback
     if Flags[flag] == nil then
         Flags[flag] = {active = false, wait_time = 0}
@@ -284,7 +284,7 @@ local function wait(options)
 end
 
 
-function AAWait(time, callback1, callback2)
+function Main_Mango_Table:AAWait(time, callback1, callback2)
     if not Global_Time and not Global_Time_Has_Switched then
         Global_Time = 0
         Global_Time_Has_Switched = false
@@ -456,7 +456,7 @@ Main.helpers.GetAllWeapon = function()
     return weapon
 end
 
-local function Access_add(name, path, value)
+function Main_Mango_Table:Access_add(name, path, value)
     Main.Items[name.."_"..path] = value
     return value
 end
@@ -465,46 +465,46 @@ Main.Items.Build_AA = Main.Tabs.Builder:switch("Build Anti-Aim")
 
 local Builder_Table = {[1]='Global', [2]='Standing', [3]='Walking', [4]='Running', [5]='Crouching', [6]='In Air', [7]="In Air + Crouching", [8]='Fake Lag'}
 
-local Chose_Options = Access_add("ChAA", "AA_options", Main.Tabs.Builder:list("", Builder_Table))
+local Chose_Options = Main_Mango_Table:Access_add("ChAA", "AA_options", Main.Tabs.Builder:list("", Builder_Table))
 
 local Builder_Section = Main.Tabs.AntiAim
 
-local function TurnTalbe(input)
+function Main_Mango_Table:TurnTalbe(input)
     return Builder_Table[input]
 end
 
-local function Visisbility_AntiAim(state)
-    Main.Items.Global_AA_Enable:visibility(TurnTalbe(Chose_Options:get()) == "Global" and state)
-    Main.Items.Standing_AA_Enable:visibility(TurnTalbe(Chose_Options:get()) == "Standing" and state)
-    Main.Items.Walking_AA_Enable:visibility(TurnTalbe(Chose_Options:get()) == "Walking" and state)
-    Main.Items.Running_AA_Enable:visibility(TurnTalbe(Chose_Options:get()) == "Running" and state)
-    Main.Items.Crouching_AA_Enable:visibility(TurnTalbe(Chose_Options:get()) == "Crouching" and state)
-    Main.Items.In_Air_AC_AA_Enable:visibility(TurnTalbe(Chose_Options:get()) == "In Air + Crouching" and state)
-    Main.Items.In_Air_AA_Enable:visibility(TurnTalbe(Chose_Options:get()) == "In Air" and state)
-    Main.Items.Fake_Lag_AA_Enable:visibility(TurnTalbe(Chose_Options:get()) == "Fake Lag" and state)
+function Main_Mango_Table:Visisbility_AntiAim(state)
+    Main.Items.Global_AA_Enable:visibility(Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Global" and state)
+    Main.Items.Standing_AA_Enable:visibility(Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Standing" and state)
+    Main.Items.Walking_AA_Enable:visibility(Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Walking" and state)
+    Main.Items.Running_AA_Enable:visibility(Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Running" and state)
+    Main.Items.Crouching_AA_Enable:visibility(Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Crouching" and state)
+    Main.Items.In_Air_AC_AA_Enable:visibility(Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "In Air + Crouching" and state)
+    Main.Items.In_Air_AA_Enable:visibility(Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "In Air" and state)
+    Main.Items.Fake_Lag_AA_Enable:visibility(Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Fake Lag" and state)
 
     for i,v in pairs(Main.Items) do
         if string.find(i, "Global_AA") and i ~= "Global_AA_Enable" then
-            v:visibility(Main.Items.Global_AA_Enable:get() and TurnTalbe(Chose_Options:get()) == "Global" and state)
+            v:visibility(Main.Items.Global_AA_Enable:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Global" and state)
         elseif string.find(i, "Standing_AA") and i ~= "Standing_AA_Enable" then
-            v:visibility(Main.Items.Standing_AA_Enable:get() and TurnTalbe(Chose_Options:get()) == "Standing" and state)
+            v:visibility(Main.Items.Standing_AA_Enable:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Standing" and state)
         elseif string.find(i, "Walking_AA") and i ~= "Walking_AA_Enable" then
-            v:visibility(Main.Items.Walking_AA_Enable:get() and TurnTalbe(Chose_Options:get()) == "Walking" and state)
+            v:visibility(Main.Items.Walking_AA_Enable:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Walking" and state)
         elseif string.find(i, "Running_AA") and i ~= "Running_AA_Enable" then
-            v:visibility(Main.Items.Running_AA_Enable:get() and TurnTalbe(Chose_Options:get()) == "Running" and state)
+            v:visibility(Main.Items.Running_AA_Enable:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Running" and state)
         elseif string.find(i, "Crouching_AA") and i ~= "Crouching_AA_Enable" then
-            v:visibility(Main.Items.Crouching_AA_Enable:get() and TurnTalbe(Chose_Options:get()) == "Crouching" and state)
+            v:visibility(Main.Items.Crouching_AA_Enable:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Crouching" and state)
         elseif string.find(i, "AC_AA") and i ~= "In_Air_AC_AA_Enable" then
-            v:visibility(Main.Items.In_Air_AC_AA_Enable:get() and TurnTalbe(Chose_Options:get()) == "In Air + Crouching" and state)
+            v:visibility(Main.Items.In_Air_AC_AA_Enable:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "In Air + Crouching" and state)
         elseif string.find(i, "In_Air_AA") and i ~= "In_Air_AA_Enable" then
-            v:visibility(Main.Items.In_Air_AA_Enable:get() and TurnTalbe(Chose_Options:get()) == "In Air" and state)
+            v:visibility(Main.Items.In_Air_AA_Enable:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "In Air" and state)
         elseif string.find(i, "Fake_Lag_AA_") and i ~= "Fake_Lag_AA_Enable" then
-            v:visibility(Main.Items.Fake_Lag_AA_Enable:get() and TurnTalbe(Chose_Options:get()) == "Fake Lag" and state)
+            v:visibility(Main.Items.Fake_Lag_AA_Enable:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get()) == "Fake Lag" and state)
         end
     end
 end
 
-local function extasy_global(state)
+function Main_Mango_Table:extasy_global(state)
     for i,v in pairs(Main.Items) do
         if string.find(i, "Global_AA_") and i ~= "Global_AA_Enable" then
             v:visibility(Main.Items.Global_AA_Enable:get() and state == "Global" and Main.Items.Build_AA:get())
@@ -581,10 +581,10 @@ Main.Items.Global_AA_YM_Modifier_randomize = Main.Items.Global_AA_Yaw_Modifier:c
 
 
 Main.Items.Global_AA_Enable:set_callback(function()
-    extasy_global(TurnTalbe(Chose_Options:get()))
+    Main_Mango_Table:extasy_global(Main_Mango_Table:TurnTalbe(Chose_Options:get()))
 end)
 
-local function Global_AA_Modifier(allowed)
+function Main_Mango_Table:Global_AA_Modifier(allowed)
     if allowed == false then
         if Menu_neverlose.ref.antiaim.fs:get() then return end
         if not Main.Items.Global_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
@@ -669,7 +669,7 @@ local function Global_AA_Modifier(allowed)
         end
 
         if Main.Items.Global_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-            wait({
+            Main_Mango_Table:wait({
                 time = Main.Items.Global_AA_Y_Time:get()/10,
                 flag = "Global_Jitter",
                 Number = 0.1,
@@ -692,7 +692,7 @@ local function Global_AA_Modifier(allowed)
                 end
             })
 
-            wait({
+            Main_Mango_Table:wait({
                 time = 1,
                 flag = "Global_Flick",
                 Number = 0.9,
@@ -768,11 +768,11 @@ Main.Items.Standing_AA_YM_Modifier = Main.Items.Standing_AA_Yaw_Modifier:create(
 Main.Items.Standing_AA_YM_Modifier_randomize = Main.Items.Standing_AA_Yaw_Modifier:create():switch("random"):tooltip("choses a random modifier")
 
 Main.Items.Standing_AA_Enable:set_callback(function()
-    extasy_global(TurnTalbe(Chose_Options:get()))
+    Main_Mango_Table:extasy_global(Main_Mango_Table:TurnTalbe(Chose_Options:get()))
 end)
 
 
-local function Standing_AA_Modifier()
+function Main_Mango_Table:Standing_AA_Modifier()
     if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items.Standing_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
@@ -856,7 +856,7 @@ local function Standing_AA_Modifier()
     end
 
     if Main.Items.Standing_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        wait({
+        Main_Mango_Table:wait({
             time = Main.Items.Standing_AA_Y_Time:get()/10,
             flag = "Standing_Jitter",
             Number = 0.1,
@@ -878,7 +878,7 @@ local function Standing_AA_Modifier()
                 Standing_Flag = not Standing_Flag
             end
         })
-        wait({
+        Main_Mango_Table:wait({
             time = 1,
             flag = "Standing_Flick",
             Number = 0.9,
@@ -889,7 +889,7 @@ local function Standing_AA_Modifier()
                 end
             end
         })
-        -- AAWait(Main.Items.Standing_AA_Y_Time:get(), function()
+        -- Main_Mango_Table:AAWait(Main.Items.Standing_AA_Y_Time:get(), function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Right:get())
         -- end, function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Left:get())
@@ -963,11 +963,11 @@ Main.Items[Setting.."_AA_YM_Modifier_randomize"] = Main.Items[Setting.."_AA_Yaw_
 
 
 Main.Items[Setting.."_AA_Enable"]:set_callback(function()
-    extasy_global(TurnTalbe(Chose_Options:get()))
+    Main_Mango_Table:extasy_global(Main_Mango_Table:TurnTalbe(Chose_Options:get()))
 end)
 
 
-local function Walking_AA_Modifier()
+function Main_Mango_Table:Walking_AA_Modifier()
     if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items[Setting.."_AA_Enable"]:get() or not Main.Items.Build_AA:get() then return end
 
@@ -1051,7 +1051,7 @@ local function Walking_AA_Modifier()
     end
 
     if Main.Items.Walking_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        wait({
+        Main_Mango_Table:wait({
             time = Main.Items.Walking_AA_Y_Time:get()/10,
             flag = "Walking_Jitter",
             Number = 0.1,
@@ -1073,7 +1073,7 @@ local function Walking_AA_Modifier()
                 Walking_Flag = not Walking_Flag
             end
         })
-        wait({
+        Main_Mango_Table:wait({
             time = 1,
             flag = "Walking_Flick",
             Number = 0.9,
@@ -1084,7 +1084,7 @@ local function Walking_AA_Modifier()
                 end
             end
         })
-        -- AAWait(Main.Items.Walking_AA_Y_Time:get(), function()
+        -- Main_Mango_Table:AAWait(Main.Items.Walking_AA_Y_Time:get(), function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Right:get())
         -- end, function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Left:get())
@@ -1156,11 +1156,11 @@ Main.Items.Running_AA_YM_Modifier_randomize = Main.Items.Running_AA_Yaw_Modifier
 
 
 Main.Items.Running_AA_Enable:set_callback(function()
-    extasy_global(TurnTalbe(Chose_Options:get()))
+    Main_Mango_Table:extasy_global(Main_Mango_Table:TurnTalbe(Chose_Options:get()))
 end)
 
 
-local function Running_AA_Modifier()
+function Main_Mango_Table:Running_AA_Modifier()
     if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items.Running_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
@@ -1244,7 +1244,7 @@ local function Running_AA_Modifier()
     end
 
     if Main.Items.Running_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        wait({
+        Main_Mango_Table:wait({
             time = Main.Items.Running_AA_Y_Time:get()/10,
             flag = "Running_Jitter",
             Number = 0.1,
@@ -1266,7 +1266,7 @@ local function Running_AA_Modifier()
                 Running_Flag = not Running_Flag
             end
         })
-        wait({
+        Main_Mango_Table:wait({
             time = 1,
             flag = "Running_Flick",
             Number = 0.9,
@@ -1277,7 +1277,7 @@ local function Running_AA_Modifier()
                 end
             end
         })
-        -- AAWait(Main.Items.Running_AA_Y_Time:get(), function()
+        -- Main_Mango_Table:AAWait(Main.Items.Running_AA_Y_Time:get(), function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Right:get())
         -- end, function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Left:get())
@@ -1351,11 +1351,11 @@ Main.Items.Crouching_AA_YM_Modifier_randomize = Main.Items.Crouching_AA_Yaw_Modi
 
 
 Main.Items.Crouching_AA_Enable:set_callback(function()
-    extasy_global(TurnTalbe(Chose_Options:get()))
+    Main_Mango_Table:extasy_global(Main_Mango_Table:TurnTalbe(Chose_Options:get()))
 end)
 
 
-local function Crouching_AA_Modifier()
+function Main_Mango_Table:Crouching_AA_Modifier()
     if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items.Crouching_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
@@ -1439,7 +1439,7 @@ local function Crouching_AA_Modifier()
     end
 
     if Main.Items.Crouching_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        wait({
+        Main_Mango_Table:wait({
             time = Main.Items.Crouching_AA_Y_Time:get()/10,
             flag = "Crouching_Jitter",
             Number = 0.1,
@@ -1462,7 +1462,7 @@ local function Crouching_AA_Modifier()
                 Crouching_Flag = not Crouching_Flag
             end
         })
-        wait({
+        Main_Mango_Table:wait({
             time = 1,
             flag = "Crouching_Flick",
             Number = 0.9,
@@ -1473,7 +1473,7 @@ local function Crouching_AA_Modifier()
                 end
             end
         })
-        -- AAWait(Main.Items.Crouching_AA_Y_Time:get(), function()
+        -- Main_Mango_Table:AAWait(Main.Items.Crouching_AA_Y_Time:get(), function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Right:get())
         -- end, function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Left:get())
@@ -1546,11 +1546,11 @@ Main.Items.In_Air_AA_YM_Modifier_randomize = Main.Items.In_Air_AA_Yaw_Modifier:c
 
 
 Main.Items.In_Air_AA_Enable:set_callback(function()
-    extasy_global(TurnTalbe(Chose_Options:get()))
+    Main_Mango_Table:extasy_global(Main_Mango_Table:TurnTalbe(Chose_Options:get()))
 end)
 
 
-local function In_Air_AA_Modifier()
+function Main_Mango_Table:In_Air_AA_Modifier()
     if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items.In_Air_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
@@ -1634,7 +1634,7 @@ local function In_Air_AA_Modifier()
     end
 
     if Main.Items.In_Air_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        wait({
+        Main_Mango_Table:wait({
             time = Main.Items.In_Air_AA_Y_Time:get()/10,
             flag = "In_Air_Jitter",
             Number = 0.1,
@@ -1656,7 +1656,7 @@ local function In_Air_AA_Modifier()
                 In_Air_Flag = not In_Air_Flag
             end
         })
-        wait({
+        Main_Mango_Table:wait({
             time = 1,
             flag = "In_Air_Flick",
             Number = 0.9,
@@ -1667,7 +1667,7 @@ local function In_Air_AA_Modifier()
                 end
             end
         })
-        -- AAWait(Main.Items.In_Air_AA_Y_Time:get(), function()
+        -- Main_Mango_Table:AAWait(Main.Items.In_Air_AA_Y_Time:get(), function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Right:get())
         -- end, function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Left:get())
@@ -1740,11 +1740,11 @@ Main.Items.In_Air_AC_AA_YM_Modifier_randomize = Main.Items.In_Air_AC_AA_Yaw_Modi
 
 
 Main.Items.In_Air_AC_AA_Enable:set_callback(function()
-    extasy_global(TurnTalbe(Chose_Options:get()))
+    Main_Mango_Table:extasy_global(Main_Mango_Table:TurnTalbe(Chose_Options:get()))
 end)
 
 
-local function In_Air_AC_AA_Modifier()
+function Main_Mango_Table:In_Air_AC_AA_Modifier()
     if Menu_neverlose.ref.antiaim.fs:get() then return end
     if not Main.Items.In_Air_AC_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
@@ -1828,7 +1828,7 @@ local function In_Air_AC_AA_Modifier()
     end
 
     if Main.Items.In_Air_AC_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        wait({
+        Main_Mango_Table:wait({
             time = Main.Items.In_Air_AC_AA_Y_Time:get()/10,
             flag = "In_Air_AC_Jitter",
             Number = 0.1,
@@ -1850,7 +1850,7 @@ local function In_Air_AC_AA_Modifier()
                 In_Air_AC_Flag = not In_Air_AC_Flag
             end
         })
-        wait({
+        Main_Mango_Table:wait({
             time = 1,
             flag = "In_Air_AC_Flick",
             Number = 0.9,
@@ -1861,7 +1861,7 @@ local function In_Air_AC_AA_Modifier()
                 end
             end
         })
-        -- AAWait(Main.Items.In_Air_AC_AA_Y_Time:get(), function()
+        -- Main_Mango_Table:AAWait(Main.Items.In_Air_AC_AA_Y_Time:get(), function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
         -- end, function()
         --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
@@ -1918,18 +1918,18 @@ Main.Items.Fake_Lag_AA_Variability_choker = Main.Items.Fake_Lag_AA_Variability:c
 
 
 Main.Items.Fake_Lag_AA_Enable:set_callback(function()
-    extasy_global(TurnTalbe(Chose_Options:get()))
+    Main_Mango_Table:extasy_global(Main_Mango_Table:TurnTalbe(Chose_Options:get()))
 end)
 
 
-local function Fake_Lag_AA_Modifier()
+function Main_Mango_Table:Fake_Lag_AA_Modifier()
     if not Main.Items.Fake_Lag_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
     local localplayer = entity.get_local_player()
     if not localplayer then return end
 
     if Main.Items.Fake_Lag_AA_Variability_choker:get() then
-        wait({
+        Main_Mango_Table:wait({
             time = math.random(),
             flag = "Fake_Lag_Variability",
             Number = 0.01,
@@ -1949,7 +1949,7 @@ local function Fake_Lag_AA_Modifier()
 
 
     if Main.Items.Fake_Lag_AA_Randomizer:get() then
-        wait({
+        Main_Mango_Table:wait({
             time = Main.Items.Fake_Lag_AA_Next_Phase_Time:get()/10,
             flag = "Fake_Lag_Limit",
             Number = 0.01,
@@ -1964,7 +1964,7 @@ local function Fake_Lag_AA_Modifier()
 end
 
 
-local function GetState()
+function Main_Mango_Table:GetState()
     local Player = entity.get_local_player()
     if Player == nil then return '' end
     local vec = Player.m_vecVelocity
@@ -1991,33 +1991,33 @@ local function GetState()
 end
 
 
-local function AntiAim_createmove(cmd)
+function Main_Mango_Table:AntiAim_createmove(cmd)
     if not Main.Items.Build_AA:get() then return end
 
-    if GetState() == "Standing" and Main.Items.Standing_AA_Enable:get() then
-        Standing_AA_Modifier()
-    elseif GetState() == "Walking" and Main.Items.Walking_AA_Enable:get() then
-        Walking_AA_Modifier()
-    elseif GetState() == "Running" and Main.Items.Running_AA_Enable:get() then
-        Running_AA_Modifier()
-    elseif GetState() == "Crouching" and Main.Items.Crouching_AA_Enable:get() then
-        Crouching_AA_Modifier()
-    elseif GetState() == "In Air" and Main.Items.In_Air_AA_Enable:get() then
-        In_Air_AA_Modifier()
-    elseif GetState() == "In Air + Crouching" and Main.Items.In_Air_AC_AA_Enable:get() then
-        In_Air_AC_AA_Modifier()
+    if Main_Mango_Table:GetState() == "Standing" and Main.Items.Standing_AA_Enable:get() then
+        Main_Mango_Table:Standing_AA_Modifier()
+    elseif Main_Mango_Table:GetState() == "Walking" and Main.Items.Walking_AA_Enable:get() then
+        Main_Mango_Table:Walking_AA_Modifier()
+    elseif Main_Mango_Table:GetState() == "Running" and Main.Items.Running_AA_Enable:get() then
+        Main_Mango_Table:Running_AA_Modifier()
+    elseif Main_Mango_Table:GetState() == "Crouching" and Main.Items.Crouching_AA_Enable:get() then
+        Main_Mango_Table:Crouching_AA_Modifier()
+    elseif Main_Mango_Table:GetState() == "In Air" and Main.Items.In_Air_AA_Enable:get() then
+        Main_Mango_Table:In_Air_AA_Modifier()
+    elseif Main_Mango_Table:GetState() == "In Air + Crouching" and Main.Items.In_Air_AC_AA_Enable:get() then
+        Main_Mango_Table:In_Air_AC_AA_Modifier()
     end
 
-    Global_AA_Modifier(
-        (GetState() == "Running" and Main.Items.Running_AA_Enable:get())or
-        (GetState() == "Standing" and Main.Items.Standing_AA_Enable:get())or
-        (GetState() == "Crouching" and Main.Items.Crouching_AA_Enable:get())or
-        (GetState() == "In Air" and Main.Items.In_Air_AA_Enable:get())or
-        (GetState() == "Walking" and Main.Items.Walking_AA_Enable:get()) or
-        (GetState() == "In Air + Crouching" and Main.Items.In_Air_AC_AA_Enable:get())
+    Main_Mango_Table:Global_AA_Modifier(
+        (Main_Mango_Table:GetState() == "Running" and Main.Items.Running_AA_Enable:get())or
+        (Main_Mango_Table:GetState() == "Standing" and Main.Items.Standing_AA_Enable:get())or
+        (Main_Mango_Table:GetState() == "Crouching" and Main.Items.Crouching_AA_Enable:get())or
+        (Main_Mango_Table:GetState() == "In Air" and Main.Items.In_Air_AA_Enable:get())or
+        (Main_Mango_Table:GetState() == "Walking" and Main.Items.Walking_AA_Enable:get()) or
+        (Main_Mango_Table:GetState() == "In Air + Crouching" and Main.Items.In_Air_AC_AA_Enable:get())
     )
     
-    Fake_Lag_AA_Modifier()
+    Main_Mango_Table:Fake_Lag_AA_Modifier()
 end
 
 for i,v in pairs(Main.Items) do
@@ -2027,23 +2027,23 @@ for i,v in pairs(Main.Items) do
 end
 
 Main.Items.Build_AA:set_callback(function()
-    Visisbility_AntiAim(Main.Items.Build_AA:get())
+    Main_Mango_Table:Visisbility_AntiAim(Main.Items.Build_AA:get())
 end)
 
 Chose_Options:set_callback(function()
-    -- Visisbility_AntiAim(Main.Items.Build_AA:get())
+    -- Main_Mango_Table:Visisbility_AntiAim(Main.Items.Build_AA:get())
     -- local Visible = false
 
-    Main.Items.Global_AA_Enable:visibility(Main.Items.Build_AA:get() and TurnTalbe(Chose_Options:get())=="Global")
-    Main.Items.Standing_AA_Enable:visibility(Main.Items.Build_AA:get() and TurnTalbe(Chose_Options:get())=="Standing")
-    Main.Items.Walking_AA_Enable:visibility(Main.Items.Build_AA:get() and TurnTalbe(Chose_Options:get())=="Walking")
-    Main.Items.Running_AA_Enable:visibility(Main.Items.Build_AA:get() and TurnTalbe(Chose_Options:get())=="Running")
-    Main.Items.Crouching_AA_Enable:visibility(Main.Items.Build_AA:get() and TurnTalbe(Chose_Options:get())=="Crouching")
-    Main.Items.In_Air_AC_AA_Enable:visibility(Main.Items.Build_AA:get() and TurnTalbe(Chose_Options:get())=="In Air + Crouching")
-    Main.Items.In_Air_AA_Enable:visibility(Main.Items.Build_AA:get() and TurnTalbe(Chose_Options:get())=="In Air")
-    Main.Items.Fake_Lag_AA_Enable:visibility(Main.Items.Build_AA:get() and TurnTalbe(Chose_Options:get())=="Fake Lag")
+    Main.Items.Global_AA_Enable:visibility(Main.Items.Build_AA:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get())=="Global")
+    Main.Items.Standing_AA_Enable:visibility(Main.Items.Build_AA:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get())=="Standing")
+    Main.Items.Walking_AA_Enable:visibility(Main.Items.Build_AA:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get())=="Walking")
+    Main.Items.Running_AA_Enable:visibility(Main.Items.Build_AA:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get())=="Running")
+    Main.Items.Crouching_AA_Enable:visibility(Main.Items.Build_AA:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get())=="Crouching")
+    Main.Items.In_Air_AC_AA_Enable:visibility(Main.Items.Build_AA:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get())=="In Air + Crouching")
+    Main.Items.In_Air_AA_Enable:visibility(Main.Items.Build_AA:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get())=="In Air")
+    Main.Items.Fake_Lag_AA_Enable:visibility(Main.Items.Build_AA:get() and Main_Mango_Table:TurnTalbe(Chose_Options:get())=="Fake Lag")
 
-    extasy_global(TurnTalbe(Chose_Options:get()))
+    Main_Mango_Table:extasy_global(Main_Mango_Table:TurnTalbe(Chose_Options:get()))
 
 end)
 
@@ -2058,7 +2058,7 @@ Main.Items.manualaa = Main.Tabs.RageMisc:combo("Manual AA", {"None", "Left", "Ba
 
 Main.Items.AntiHead = Main.Tabs.RageMisc:switch("Anti-Head [BETA]"):tooltip(ui.get_icon("triangle-exclamation").."Attempts to randomize your head yaw making it harder to predict")
 
-function tablefind(tbl, value)
+function Main_Mango_Table:tablefind(tbl, value)
     for k, v in pairs(tbl) do
         if v == value then
             return k
@@ -2067,11 +2067,11 @@ function tablefind(tbl, value)
     return nil
 end
 
-local function Rand_Multipoint()
+function Main_Mango_Table:Rand_Multipoint()
     if not Main.Items.Randomize_Multipoint:get() then return end
     -- table.foreach(Main.Items.Randomize_Multipoint_AllowedWeapons:get(), print)
     for i,v in pairs(weapons) do
-        if tablefind(Main.Items.Randomize_Multipoint_AllowedWeapons:get(), v) then
+        if Main_Mango_Table:tablefind(Main.Items.Randomize_Multipoint_AllowedWeapons:get(), v) then
             ui.find("Aimbot", "Ragebot", "Selection", v, "Multipoint", "Head Scale"):override(math.random(0, 100))
             ui.find("Aimbot", "Ragebot", "Selection", v, "Multipoint", "Body Scale"):override(math.random(0, 100))
         else
@@ -2081,7 +2081,7 @@ local function Rand_Multipoint()
     end
 end
 
-local function Randomize_DT_Ticks(cmd)
+function Main_Mango_Table:Randomize_DT_Ticks(cmd)
     if not Main.Items.randomize:get() then return end
     if Main.Items.Min:get() > Main.Items.Max:get() then
         Main.Items.Max:set(Main.Items.Min:get())
@@ -2089,12 +2089,12 @@ local function Randomize_DT_Ticks(cmd)
     Menu_neverlose.ref.ragebot.lag_limit:override(math.random(Main.Items.Min:get(), Main.Items.Max:get()))
 end
 
-local Enemy_Anti_Head = function()
+function Main_Mango_Table:Enemy_Anti_Head()
     if not Main.Items.AntiHead:get() then return end
     if Main.Items.manualaa:get() ~= "None" then return end
     local Enemies_Table = entity.get_players(true, false)
     for i,v in pairs(Enemies_Table) do
-        if Get_Enemy_Visible(v, true, true) then
+        if Main_Mango_Table:Get_Enemy_Visible(v, true, true) then
             Main.Items.Build_AA:override(false)
             if Menu_neverlose.ref.ragebot.dt:get() or Menu_neverlose.ref.ragebot.hs:get() then
                 rage.antiaim:override_hidden_pitch(math.random(-89, 89))
@@ -2122,7 +2122,7 @@ local Enemy_Anti_Head = function()
     end
 end
 
-local manual_aa = function()
+function Main_Mango_Table:manual_aa()
 
     yaw = Menu_neverlose.ref.antiaim.yaw
     base = Menu_neverlose.ref.antiaim.base
@@ -2168,7 +2168,7 @@ local manual_aa = function()
         end
 end
 
-local function fix_nade()
+function Main_Mango_Table:fix_nade()
     if not Main.Items.fix_nade:get() then return end
     local lp = entity.get_local_player()
     if not (lp or lp:is_alive()) then return end
@@ -2181,13 +2181,13 @@ local function fix_nade()
     end
 end
 
-local function fix_fakeduck()
+function Main_Mango_Table:fix_fakeduck()
     if not Menu_neverlose.ref.antiaim.fd:get() then return end
     Menu_neverlose.ref.antiaim.limit:override(14)
     ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(false)
 end
 
-local function no_fall_damage(cmd)
+function Main_Mango_Table:no_fall_damage(cmd)
     if not Main.Items.no_fall_damage:get() then return end
     local lp = entity.get_local_player()
     if lp == nil then return end
@@ -2201,7 +2201,7 @@ local function no_fall_damage(cmd)
     end
 end
 
-local function fastladder(cmd)
+function Main_Mango_Table:fastladder(cmd)
     if not Main.Items.fastladder:get() then return end
     local lp = entity.get_local_player()
     if not lp then return end
@@ -2228,7 +2228,7 @@ Main.Items.Slientshots = Main.Tabs.Ragebot:switch("Slient shots"):tooltip("A.K.A
 
 Main.Items.Slientshots_Mode = Main.Items.Slientshots:create():combo("Mode", "Overrides", "Send packets")
 
-local always_choke_slient_shots = function()
+function Main_Mango_Table:always_choke_slient_shots()
 
     events.createmove:set(function(cmd)
         local localplayer = entity.get_local_player()
@@ -2269,14 +2269,14 @@ Main.Items.CE = Main.Tabs.Misc:switch("Croshiar Events")
 
 Main.Items.CScope = Main.Tabs.Scope:switch("Custom Scope")
 
-local AlwaysOn = Access_add("AlwaysOn", "CustScope", Main.Tabs.Scope:switch("Always On"):visibility(false))
-local line_length = Access_add("line_length", "CustScope", Main.Tabs.Scope:slider("Line Length", -1000, 1000, 50, 0.5):visibility(false))
-local gap_size = Access_add("gap_size", "CustScope", Main.Tabs.Scope:slider("Gap Size", -200, 200, 60, 1):visibility(false))
-local fade_steps = Access_add("fade_steps", "CustScope", Main.Tabs.Scope:slider("Fade Alpha", 0, 255, 10, 1):visibility(false))
-local CScopeColor = Access_add("CScopeColor", "CustScope", Main.Tabs.Scope:color_picker("Scope Color", {["Normal"] = {color(255, 255, 255, 255)}}):visibility(false))
-local Top_Bottom_lines = Access_add("Top_Bottom_lines", "CustScope", Main.Tabs.Scope:switch("Top/Bottom Lines"):visibility(false))
-local Right_Left_lines = Access_add("Right_Left_lines", "CustScope", Main.Tabs.Scope:switch("Right/Lift Lines"):visibility(false))
-local Rounding = Access_add("Rounding", "CustScope", Main.Tabs.Scope:slider("Rounding", 0, 20, 2, 1):visibility(false))
+local AlwaysOn = Main_Mango_Table:Access_add("AlwaysOn", "CustScope", Main.Tabs.Scope:switch("Always On"):visibility(false))
+local line_length = Main_Mango_Table:Access_add("line_length", "CustScope", Main.Tabs.Scope:slider("Line Length", -1000, 1000, 50, 0.5):visibility(false))
+local gap_size = Main_Mango_Table:Access_add("gap_size", "CustScope", Main.Tabs.Scope:slider("Gap Size", -200, 200, 60, 1):visibility(false))
+local fade_steps = Main_Mango_Table:Access_add("fade_steps", "CustScope", Main.Tabs.Scope:slider("Fade Alpha", 0, 255, 10, 1):visibility(false))
+local CScopeColor = Main_Mango_Table:Access_add("CScopeColor", "CustScope", Main.Tabs.Scope:color_picker("Scope Color", {["Normal"] = {color(255, 255, 255, 255)}}):visibility(false))
+local Top_Bottom_lines = Main_Mango_Table:Access_add("Top_Bottom_lines", "CustScope", Main.Tabs.Scope:switch("Top/Bottom Lines"):visibility(false))
+local Right_Left_lines = Main_Mango_Table:Access_add("Right_Left_lines", "CustScope", Main.Tabs.Scope:switch("Right/Lift Lines"):visibility(false))
+local Rounding = Main_Mango_Table:Access_add("Rounding", "CustScope", Main.Tabs.Scope:slider("Rounding", 0, 20, 2, 1):visibility(false))
 
 Main.Items.no_fall_damage = Main.Tabs.Misc:switch('No Fall Damage')
 Main.Items.fix_nade = Main.Tabs.Misc:switch('fix nade')
@@ -2289,7 +2289,7 @@ local fps = 0
 local cur_mode = 0
 local timing = timing_switch
 
-local function hk_create_move(cmd)
+function Main_Mango_Table:hk_create_move(cmd)
     timing = timing + 1
 end
 
@@ -2348,9 +2348,9 @@ Main.Items.Support_Me = Main.Tabs.KillSay:switch('Support Me')
 Main.Items.n1_one = Main.Tabs.KillSay:switch('1') -- Custom on kill
 Main.Items.Custom_Kill = Main.Tabs.KillSay:switch('Custom on kill')
 
-local Inp1 = Access_add("Inp1", "CustKillsay", Main.Tabs.KillSay:input("Inp 1", "neverlose.cc/market/item?id=LMaW6X"):visibility(false))
-local Inp2 = Access_add("Inp2", "CustKillsay", Main.Tabs.KillSay:input("Inp 2", "Get"..Main.script_db.lua_name.."neverlose.cc/market/item?id=LMaW6X"):visibility(false))
-local Inp3 = Access_add("Inp3", "CustKillsay", Main.Tabs.KillSay:input("Inp 3", "L Bozo"):visibility(false))
+local Inp1 = Main_Mango_Table:Access_add("Inp1", "CustKillsay", Main.Tabs.KillSay:input("Inp 1", "neverlose.cc/market/item?id=LMaW6X"):visibility(false))
+local Inp2 = Main_Mango_Table:Access_add("Inp2", "CustKillsay", Main.Tabs.KillSay:input("Inp 2", "Get"..Main.script_db.lua_name.."neverlose.cc/market/item?id=LMaW6X"):visibility(false))
+local Inp3 = Main_Mango_Table:Access_add("Inp3", "CustKillsay", Main.Tabs.KillSay:input("Inp 3", "L Bozo"):visibility(false))
 
 local Support_Table = {
     "Howdy %s get good get neverlose.cc/market/item?id=LMaW6X",
@@ -2363,7 +2363,7 @@ local n1_table = {
 }
 
 
-local function Visibility_easy()
+function Main_Mango_Table:Visibility_easy()
     for i,v in pairs(Main.Items) do
         if string.find(i, "CustScope") then
             v:visibility(Main.Items.CScope:get())
@@ -2601,7 +2601,7 @@ end
 
 local Exploit = 0
 
-local function Visuals_Createmove()
+function Main_Mango_Table:Visuals_Createmove()
     Exploit = rage.exploit:get()
 end
 
@@ -2612,7 +2612,7 @@ Main.Items.x = Main.Items.viewmodel:create():slider("X", - 15, 15, 0)
 Main.Items.y = Main.Items.viewmodel:create():slider("Y", - 15, 15, 0)
 Main.Items.z = Main.Items.viewmodel:create():slider("Z", - 15, 15, 0)
 
-local viewmodel = function ()
+function Main_Mango_Table:viewmodel()
 
     fov = Main.Items.fov:get()
     x = Main.Items.x:get()
@@ -2638,7 +2638,7 @@ end
 local font = render.load_font("c:/windows/fonts/calibrib.ttf", 28, "ad")
 local alpha = 255
 
-local function Visuals_Indicator()
+function Main_Mango_Table:Visuals_Indicator()
     if not Main.Items.CE:get() then return end
     local localplayer = entity.get_local_player()
     local screen_size = Main.helpers.screen_size
@@ -2695,7 +2695,7 @@ local function Visuals_Indicator()
 
     local DTX, DTY = 10, 22
 
-    Main.visuals.base_render.string(pos.x, pos.y - 3, false, GetState(), color(67,95,216,255), 1, 1)
+    Main.visuals.base_render.string(pos.x, pos.y - 3, false, Main_Mango_Table:GetState(), color(67,95,216,255), 1, 1)
 
     render.shadow(vector(x/2 - 120,y / 2 - 333), vector(x/2 + 120,y / 2 - 325), color(76, 159, 242, alpha),20,0,1)
     render.rect_outline(vector(x/2 - 120,y / 2 - 333), vector(x/2 + 120,y / 2 - 325), color(0,0,0, alpha), 1.2)
@@ -2741,7 +2741,7 @@ end
 
 Main.Items.Debug = Main.Tabs.RageMisc:switch("\a698EFFFF" .. ui.get_icon("triangle-exclamation") .. " Debug Mode")
 
-local debug_mode = function()
+function Main_Mango_Table:debug_mode()
 
     if not Main.Items.Debug:get() then return end
 
@@ -2758,7 +2758,7 @@ local debug_mode = function()
 
     if not entity.get_local_player() then return end
     if not globals.is_in_game or not globals.is_connected then return end
-    local DesyncAngle = math.ceil(math.abs(normalize_yaw(entity.get_local_player():get_anim_state().eye_yaw % 360 - math.floor(entity.get_local_player():get_anim_state().abs_yaw) % 360)))
+    local DesyncAngle = math.ceil(math.abs(Main_Mango_Table:normalize_yaw(entity.get_local_player():get_anim_state().eye_yaw % 360 - math.floor(entity.get_local_player():get_anim_state().abs_yaw) % 360)))
 
     local position2 = vector(x-1530,y-710)
     render.rect(vector(290, 385), position2, color(25,25,25,100), 10, false) -- color: color[, rounding: number, no_clamp: boolean]
@@ -2793,7 +2793,7 @@ end
 
 local width, height = render.screen_size().x, render.screen_size().y
 
-local function PlayerZoomed()
+function Main_Mango_Table:PlayerZoomed()
     local plr = entity.get_local_player()
 
     if plr == nil then return false end
@@ -2816,11 +2816,11 @@ local function PlayerZoomed()
     return false
 end
 
-local function draw_scope_lines()
+function Main_Mango_Table:draw_scope_lines()
 
     if not Main.Items.CScope:get() then return end
 
-    local is_zoomed = PlayerZoomed()
+    local is_zoomed = Main_Mango_Table:PlayerZoomed()
 
     if not AlwaysOn:get() then
         if not is_zoomed then
@@ -2927,7 +2927,7 @@ Setup_Updates:label([[
 ]])
 
 
-local function FormatTime(seconds)
+function Main_Mango_Table:FormatTime(seconds)
     local timeString = ""
     
     if seconds < 60 then
@@ -2949,14 +2949,14 @@ local function FormatTime(seconds)
     return timeString
 end
 
-local function Update_SesionTime()
-    wait({
+function Main_Mango_Table:Update_SesionTime()
+    Main_Mango_Table:wait({
         time=1,
         flag="SesionTime",
         Number=0.008,
         callback = function()
             _G.Sesion_Time = _G.Sesion_Time + 1
-            SesionTime:name("Session Time » " .. FormatTime(_G.Sesion_Time))
+            SesionTime:name("Session Time » " .. Main_Mango_Table:FormatTime(_G.Sesion_Time))
         end
     })
 end
@@ -2996,25 +2996,17 @@ local CFG_ConfirmDeletion_Yes = cfgsys:button(ui.get_icon('check')):visibility(f
 local CFG_ConfirmDeletion_No = cfgsys:button(" X "):visibility(false)
 
 
-local function decode(data)
-    return Base64.decode(data)
-end
-
-local function encode(data)
-    return Base64.encode(data)
-end
-
-
 local Base64_Decode = cfgsys:button(ui.get_icon('code')):tooltip('Decode')
 local Base64_Encode = cfgsys:button(ui.get_icon('upload')):tooltip('Encode')
 
 Base64_Decode:set_callback(function()
-clipboard.set(clipboard.get())
+clipboard.set(Main_Mango_Table:decode(clipboard.get()))
 common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Successfully Decoded!")
 end, false)
 
 Base64_Encode:set_callback(function()
-clipboard.set(clipboard.get())
+    print("lalalalal")
+clipboard.set(Main_Mango_Table:encode(clipboard.get()))
 common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Successfully encoded!")
 end, false)
 
@@ -3023,7 +3015,7 @@ CFG_ConfirmDeletion_Yes:visibility(true)
 CFG_ConfirmDeletion_No:visibility(true)
 end)
 
-function GetCFGS(id)
+function Main_Mango_Table:GetCFGS(id)
     local RTAble = nil
     for i,v in pairs(json.parse(files.read(Config_Data))) do
         if i == id then
@@ -3033,13 +3025,13 @@ function GetCFGS(id)
     return tostring(RTAble)
 end
 
-local function GetCFG()
-    clipboard.set(encode(files.read(Configs_Path.."\\"..GetCFGS(Configs:get())..".lua")))
+function Main_Mango_Table:GetCFG()
+    clipboard.set(Main_Mango_Table:encode(files.read(Configs_Path.."\\"..Main_Mango_Table:GetCFGS(Configs:get())..".lua")))
 end
 
 
 
-function config_load(text, is_import, CFN)
+function Main_Mango_Table:config_load(text, is_import, CFN)
     local CFN = CFN or ''
     local is_import = is_import or false
     local config_load_func = {}
@@ -3060,7 +3052,7 @@ function config_load(text, is_import, CFN)
             common.add_notify(
                 Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155, 155, 255, 255)),
                 "New Config Has been imported to " ..
-                Main.helpers.RGBToColorString(GetCFGS(Configs:get()), color(122, 122, 255, 255))
+                Main.helpers.RGBToColorString(Main_Mango_Table:GetCFGS(Configs:get()), color(122, 122, 255, 255))
             )
         elseif is_import == 'NONE' then
             common.add_notify(
@@ -3070,12 +3062,12 @@ function config_load(text, is_import, CFN)
         elseif is_import == false then
             common.add_notify(
                 Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155, 155, 255, 255)),
-                Main.helpers.RGBToColorString(GetCFGS(Configs:get()), color(122, 122, 255, 255)) .. " has been Loaded!"
+                Main.helpers.RGBToColorString(Main_Mango_Table:GetCFGS(Configs:get()), color(122, 122, 255, 255)) .. " has been Loaded!"
             )
         end
 
         -- Decode the config text
-        local decoded_text = Base64.decode(text)
+        local decoded_text = Main_Mango_Table:decode(text)
         local cfg_data = json.parse(decoded_text)
         
         -- If decoding and parsing were successful, load the config
@@ -3095,9 +3087,9 @@ function config_load(text, is_import, CFN)
     return config_load_func
 end
 
-local Clean_Cfg = [[{}]]
+local Clean_Cfg = [[--Mang0 ]]
 
-local function Create_CFG(state)
+function Main_Mango_Table:Create_CFG(state)
     local new_data = {}
     local Config_Data_Open = json.parse(files.read(Config_Data))
     for i,v in pairs(Config_Data_Open) do table.insert(new_data, v)end
@@ -3116,13 +3108,13 @@ local function Create_CFG(state)
         
     if state == false then
         local json_config = json.stringify(cfg_data)
-        local encoded_config = json_config --encode(json_config)
+        local encoded_config = json_config --Main_Mango_Table:encode(json_config)
         files.write(Configs_Path.."\\"..CFG_Name:get()..".lua", encoded_config)
     else
         -- local json_config = json.stringify(cfg_data)
-        -- local encoded_config = encode(json_config)
+        -- local encoded_config = Main_Mango_Table:encode(json_config)
         files.write(Configs_Path.."\\"..CFG_Name:get()..".lua", Clean_Cfg)
-        config_load(files.read(Configs_Path.."\\"..CFG_Name:get()..".lua"), 'NONE', CFG_Name:get())
+        Main_Mango_Table:config_load(files.read(Configs_Path.."\\"..CFG_Name:get()..".lua"), 'NONE', CFG_Name:get())
     end
     Configs:update(json.parse(files.read(Config_Data)))
     CFG_Name:set("")
@@ -3136,10 +3128,10 @@ end, false)
 confirm_cfg_creation:set_callback(function()
     confirm_cfg_creation:visibility(false)
     CFG_Data_Switch:visibility(false)
-    Create_CFG(CFG_Data_Switch:get())
+    Main_Mango_Table:Create_CFG(CFG_Data_Switch:get())
 end, false)
 
-local function config_save()
+function Main_Mango_Table:config_save()
     local cfg_data = {}
     for i, v in pairs(Main.Items) do
         local ui_value = v:get()
@@ -3149,29 +3141,29 @@ local function config_save()
             cfg_data[i] = ui_value
         end
     end
-
+    
     local json_config = json.stringify(cfg_data)
-    local encoded_config = json_config --encode(json_config)
-    files.write(Configs_Path.."\\"..GetCFGS(Configs:get())..".lua", encoded_config)
+    local encoded_config = Main_Mango_Table:encode(json_config)
+    files.write(Configs_Path.."\\"..Main_Mango_Table:GetCFGS(Configs:get())..".lua", encoded_config)
     Configs:update(json.parse(files.read(Config_Data)))
-    common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Saved Config to "..Main.helpers.RGBToColorString(GetCFGS(Configs:get()), color(122,122,255,255)))
+    common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Saved Config to "..Main.helpers.RGBToColorString(Main_Mango_Table:GetCFGS(Configs:get()), color(122,122,255,255)))
 end
 
 CFG_load:set_callback(function()
-    config_load(files.read(Configs_Path.."\\"..GetCFGS(Configs:get())..".lua"))
+    Main_Mango_Table:config_load(files.read(Configs_Path.."\\"..Main_Mango_Table:GetCFGS(Configs:get())..".lua"))
 end)
 
 CFG_save:set_callback(function()
-    config_save()
+    Main_Mango_Table:config_save()
 end)
 
 import_cfg:set_callback(function()
-    config_load(clipboard.get(), true)
+    Main_Mango_Table:config_load(clipboard.get(), true)
 end)
 
 export_cfg:set_callback(function()
-    GetCFG()
-    common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), Main.helpers.RGBToColorString(GetCFGS(Configs:get()), color(122,122,255,255)).." has been Copied to clipboard!")
+    Main_Mango_Table:GetCFG()
+    common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), Main.helpers.RGBToColorString(Main_Mango_Table:GetCFGS(Configs:get()), color(122,122,255,255)).." has been Copied to clipboard!")
 end)
 
 CFG_ConfirmDeletion_Yes:set_callback(function()
@@ -3180,9 +3172,9 @@ CFG_ConfirmDeletion_Yes:set_callback(function()
 
     local Config_Data_Open = json.parse(files.read(Config_Data))
 
-    local dataToRemove = GetCFGS(Configs:get())
+    local dataToRemove = Main_Mango_Table:GetCFGS(Configs:get())
 
-    local function remove(jsonArray, itemToRemove)
+    function remove(jsonArray, itemToRemove)
         for i, item in ipairs(jsonArray) do
             if item == itemToRemove then
                 table.remove(jsonArray, i)
@@ -3194,7 +3186,7 @@ CFG_ConfirmDeletion_Yes:set_callback(function()
     if remove(Config_Data_Open, dataToRemove) then
         local updatedData = json.stringify(Config_Data_Open)
         files.write(Config_Data, updatedData)
-        common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Deleted "..GetCFGS(Configs:get()))
+        common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "Deleted "..Main_Mango_Table:GetCFGS(Configs:get()))
     else
         common.add_notify(Main.helpers.RGBToColorString(Main.script_db.lua_name, color(155,155,255,255)), "There is no such config!")
     end
@@ -3207,7 +3199,7 @@ CFG_ConfirmDeletion_No:set_callback(function()
     Configs:update(json.parse(files.read(Config_Data)))
 end)
 
-local function KillSay(e)
+function Main_Mango_Table:KillSay(e)
     local Custom_Table = {
         Inp1:get(),
         Inp2:get(),
@@ -3237,29 +3229,29 @@ end
 
 Main.Items.Aspect_Ratio = Main.Tabs.Misc:slider("Aspect Ratio", 0, 60, 0, 1)
 
-function Main_CM(cmd)
-    no_fall_damage(cmd)
-    Randomize_DT_Ticks(cmd)
+function Main_Mango_Table:Main_CM(cmd)
+    Main_Mango_Table:no_fall_damage(cmd)
+    Main_Mango_Table:Randomize_DT_Ticks(cmd)
     -- defensive_aa(cmd)
-    Visuals_Createmove()
-    fastladder(cmd)
-    fix_nade()
-    AntiAim_createmove(cmd)
-    fix_fakeduck()
-    Rand_Multipoint()
-    manual_aa()
-    Enemy_Anti_Head()
+    Main_Mango_Table:Visuals_Createmove()
+    Main_Mango_Table:fastladder(cmd)
+    Main_Mango_Table:fix_nade()
+    Main_Mango_Table:AntiAim_createmove(cmd)
+    Main_Mango_Table:fix_fakeduck()
+    Main_Mango_Table:Rand_Multipoint()
+    Main_Mango_Table:manual_aa()
+    Main_Mango_Table:Enemy_Anti_Head()
     cvar.r_aspectratio:float(Main.Items.Aspect_Ratio:get() / 10)
 end
 
-function Main_Render(cmd)
+function Main_Mango_Table:Main_Render(cmd)
     Main.visuals.watermark.draw()
-    draw_scope_lines()
-    Visibility_easy()
-    Visuals_Indicator()
-    Update_SesionTime()
-    debug_mode()
-    viewmodel()
+    Main_Mango_Table:draw_scope_lines()
+    Main_Mango_Table:Visibility_easy()
+    Main_Mango_Table:Visuals_Indicator()
+    Main_Mango_Table:Update_SesionTime()
+    Main_Mango_Table:debug_mode()
+    Main_Mango_Table:viewmodel()
     clantag.run()
     -- Clan_tag()
     -- window_title()
@@ -3267,23 +3259,24 @@ end
 
 
 
-events.render:set(function(cmd)
-    Main_Render(cmd)
-end)
+-- events.render:set(function(cmd)
+--     Main_Render(cmd)
+-- end)
 
-events.createmove:set(function(cmd)
-    Main_CM(cmd)
-end)
+-- events.createmove:set(function(cmd)
+--     Main_CM(cmd)
+-- end)
 
-events.aim_ack:set(function(e)
-    KillSay(e)
-end)
+-- events.aim_ack:set(function(e)
+--     KillSay(e)
+-- end)
 
-once_callback = function()
-    always_choke_slient_shots()
+function Main_Mango_Table:once_callback()
+    Main_Mango_Table:always_choke_slient_shots()
 end
 
-once_callback()
+
+return Main_Mango_Table
 
 end
 
