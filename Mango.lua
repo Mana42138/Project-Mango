@@ -1,4 +1,12 @@
 
+local Test = {}
+function Test:pr(pprint)
+    pprint("script_is_ready")
+end
+
+function Test:dev(files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_, clipboard, csgo_weapons, base64)
+local files, color, common, cvar, entity, esp, events, globals, json, materials, math, ui, network, panorama, rage, render, utils, vector, csgo_weapons = files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_, csgo_weapons
+
 files.create_folder('nl\\Mango')
 
 files.create_folder('nl\\Mango')
@@ -3267,3 +3275,5 @@ once_callback = function()
 end
 
 once_callback()
+
+end
