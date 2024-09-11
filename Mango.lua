@@ -2745,7 +2745,7 @@ local debug_mode = function()
 
     local position2 = vector(x-1530,y-710)
     render.rect(vector(290, 385), position2, color(25,25,25,100), 10, false) -- color: color[, rounding: number, no_clamp: boolean]
-
+    
 
     local i = 0
     for element, value in pairs(elements) do
