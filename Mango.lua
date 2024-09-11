@@ -141,9 +141,9 @@ end
 
 download()
 
-local Menu_neverlose = {}
+-- local Menu_neverlose = {}
 
-Menu_neverlose.ref = {
+Main_Mango_Table.ref = {
     ["ragebot"] = {
         main = ui.find("Aimbot", "Ragebot", "Main"),
         autopeek = ui.find("Aimbot", "Ragebot", "Main", "Peek Assist"),
@@ -240,7 +240,7 @@ local Main = {
     Items = {},
     Main_Anti_Defensive = {
         main = {
-            fs = Menu_neverlose.ref.antiaim.fs,
+            fs = Main_Mango_Table.ref.antiaim.fs,
             hidden = ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Hidden"),
             lag_options = ui.find("Aimbot", "Ragebot", "Main", "Double Tap", "Lag Options"),
         }
@@ -264,7 +264,7 @@ local Main = {
 
 local Flags = {}
 
-function Main_Mango_Table:wait(options)
+function wait(options)
     local time, flag, Number, callback = options.time, options.flag, options.Number, options.callback
     if Flags[flag] == nil then
         Flags[flag] = {active = false, wait_time = 0}
@@ -550,7 +550,7 @@ function Main_Mango_Table:extasy_global(state)
     end
 end
 
-local Yaw_modifier_List = Menu_neverlose.ref.antiaim.yawmod:list()
+local Yaw_modifier_List = Main_Mango_Table.ref.antiaim.yawmod:list()
 
 Main.Items.Global_AA_Enable = Builder_Section:switch("Global Enable")
 
@@ -564,7 +564,7 @@ Main.Items.Global_AA_Yaw_Modifier = Builder_Section:combo("G ~ Yaw Modifier", Ya
 
 Main.Items.Global_AA_Left_Limit = Builder_Section:slider("G ~ Left Limit", 0, 60, 0, 1)
 Main.Items.Global_AA_Right_Limit = Builder_Section:slider("G ~ Right Limit", 0, 60, 0, 1)
-Main.Items.Global_AA_Options = Builder_Section:selectable("G ~ Options", Menu_neverlose.ref.antiaim.options:list())
+Main.Items.Global_AA_Options = Builder_Section:selectable("G ~ Options", Main_Mango_Table.ref.antiaim.options:list())
 Main.Items.Global_AA_Extended_Angels = Builder_Section:switch("G ~ Extended Angels", false)
 
 Main.Items.Global_AA_Y_Add_Left = Main.Items.Global_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -586,7 +586,7 @@ end)
 
 function Main_Mango_Table:Global_AA_Modifier(allowed)
     if allowed == false then
-        if Menu_neverlose.ref.antiaim.fs:get() then return end
+        if Main_Mango_Table.ref.antiaim.fs:get() then return end
         if not Main.Items.Global_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
         local exploit_state = rage.exploit:get()
@@ -649,17 +649,17 @@ function Main_Mango_Table:Global_AA_Modifier(allowed)
 
         if exploit_state ~= 0 then
             if pitch_override ~= nil and yaw_settings ~= nil then
-                -- Menu_neverlose.ref.ragebot.hs:override(true)
-                Menu_neverlose.ref.antiaim.hs_options:override("Break LC")
+                -- Main_Mango_Table.ref.ragebot.hs:override(true)
+                Main_Mango_Table.ref.ragebot.hs_options:override("Break LC")
                 rage.antiaim:override_hidden_pitch(pitch_override)
-                rage.antiaim:override_hidden_yaw_offset(yaw_override)
-                Menu_neverlose.ref.ragebot.lag_options:override("Always On")
-                Menu_neverlose.ref.antiaim.hidden:override(true)
+                rage.antiaim:override_hidden_yaw_offset(yaw_override or 0)
+                Main_Mango_Table.ref.ragebot.lag_options:override("Always On")
+                Main_Mango_Table.ref.antiaim.hidden:override(true)
             else
-                -- Menu_neverlose.ref.ragebot.hs:override()
-                Menu_neverlose.ref.ragebot.hs_options:override()
-                Menu_neverlose.ref.ragebot.lag_options:override()
-                Menu_neverlose.ref.antiaim.hidden:override()
+                -- Main_Mango_Table.ref.ragebot.hs:override()
+                Main_Mango_Table.ref.ragebot.hs_options:override()
+                Main_Mango_Table.ref.ragebot.lag_options:override()
+                Main_Mango_Table.ref.antiaim.hidden:override()
             end
         end
 
@@ -669,7 +669,7 @@ function Main_Mango_Table:Global_AA_Modifier(allowed)
         end
 
         if Main.Items.Global_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-            Main_Mango_Table:wait({
+            wait({
                 time = Main.Items.Global_AA_Y_Time:get()/10,
                 flag = "Global_Jitter",
                 Number = 0.1,
@@ -677,28 +677,28 @@ function Main_Mango_Table:Global_AA_Modifier(allowed)
                     if math.random(1, 5) == 5 then
                         Global_Flag_2 = true
                         if math.random(1, 2) == 1 then
-                            Menu_neverlose.ref.antiaim.offset:override(-60)
+                            Main_Mango_Table.ref.antiaim.offset:set(-60)
                         else
-                            Menu_neverlose.ref.antiaim.offset:override(60)
+                            Main_Mango_Table.ref.antiaim.offset:set(60)
                         end
                     else
                         if Global_Flag then
-                            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Global_AA_Y_Add_Right:get())
+                            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Global_AA_Y_Add_Right:get())
                         else
-                            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Global_AA_Y_Add_Left:get())
+                            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Global_AA_Y_Add_Left:get())
                         end
                     end
                     Global_Flag = not Global_Flag
                 end
             })
-
-            Main_Mango_Table:wait({
+            
+            wait({
                 time = 1,
                 flag = "Global_Flick",
                 Number = 0.9,
                 callback = function()
                     if Global_Flag_2 then
-                        Menu_neverlose.ref.antiaim.offset:override(0)
+                        Main_Mango_Table.ref.antiaim.offset:set(0)
                         Global_Flag_2 = false
                     end
                 end
@@ -706,13 +706,15 @@ function Main_Mango_Table:Global_AA_Modifier(allowed)
         end
 
         if Main.Items.Global_AA_Yaw_Add_Type:get() == 'Static' then
-            if Menu_neverlose.ref.antiaim.inverter:get() then
-                Menu_neverlose.ref.antiaim.offset:override(Main.Items.Global_AA_Y_Add_Left:get())
+            if Main_Mango_Table.ref.antiaim.inverter:get() then
+                -- Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Global_AA_Y_Add_Left:get())
+                Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Global_AA_Y_Add_Left:get())
             else
-                Menu_neverlose.ref.antiaim.offset:override(Main.Items.Global_AA_Y_Add_Right:get())
+                -- Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Global_AA_Y_Add_Right:get())
+                Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Global_AA_Y_Add_Right:get())
             end
         end
-
+        
         local YawModifier = Main.Items.Global_AA_Yaw_Modifier:get()
 
         -- if YawModifier ~= "Disabled" then
@@ -720,13 +722,13 @@ function Main_Mango_Table:Global_AA_Modifier(allowed)
                 YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
             end
             
-            Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.Global_AA_YM_Modifier:get())
-            Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
+            Main_Mango_Table.ref.antiaim.ymoffset:override(Main.Items.Global_AA_YM_Modifier:get())
+            Main_Mango_Table.ref.antiaim.yawmod:override(YawModifier)
         -- end
 
         ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Global_AA_Left_Limit:get())
         ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Global_AA_Right_Limit:get())
-        Menu_neverlose.ref.antiaim.options:override(Main.Items.Global_AA_Options:get())
+        Main_Mango_Table.ref.antiaim.options:override(Main.Items.Global_AA_Options:get())
 
         if Main.Items.Global_AA_Extended_Angels:get() then
             ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Global_AA_Extended_Angels:get())
@@ -753,7 +755,7 @@ Main.Items.Standing_AA_Yaw_Modifier = Builder_Section:combo("S ~ Yaw Modifier", 
 
 Main.Items.Standing_AA_Left_Limit = Builder_Section:slider("S ~ Left Limit", 0, 60, 0, 1)
 Main.Items.Standing_AA_Right_Limit = Builder_Section:slider("S ~ Right Limit", 0, 60, 0, 1)
-Main.Items.Standing_AA_Options = Builder_Section:selectable("S ~ Options", Menu_neverlose.ref.antiaim.options:list())
+Main.Items.Standing_AA_Options = Builder_Section:selectable("S ~ Options", Main_Mango_Table.ref.antiaim.options:list())
 Main.Items.Standing_AA_Extended_Angels = Builder_Section:switch("S ~ Extended Angels", false)
 
 Main.Items.Standing_AA_Y_Add_Left = Main.Items.Standing_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -773,7 +775,7 @@ end)
 
 
 function Main_Mango_Table:Standing_AA_Modifier()
-    if Menu_neverlose.ref.antiaim.fs:get() then return end
+    if Main_Mango_Table.ref.antiaim.fs:get() then return end
     if not Main.Items.Standing_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -836,17 +838,17 @@ function Main_Mango_Table:Standing_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- Menu_neverlose.ref.ragebot.hs:override(true)
-            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
+            -- Main_Mango_Table.ref.ragebot.hs:override(true)
+            Main_Mango_Table.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
-            rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
-            Menu_neverlose.ref.antiaim.hidden:override(true)
+            rage.antiaim:override_hidden_yaw_offset(yaw_override or 0)
+            Main_Mango_Table.ref.ragebot.lag_options:override("Always On")
+            Main_Mango_Table.ref.antiaim.hidden:override(true)
         else
-            -- Menu_neverlose.ref.ragebot.hs:override()
-            Menu_neverlose.ref.ragebot.hs_options:override()
-            Menu_neverlose.ref.ragebot.lag_options:override()
-            Menu_neverlose.ref.antiaim.hidden:override()
+            -- Main_Mango_Table.ref.ragebot.hs:override()
+            Main_Mango_Table.ref.ragebot.hs_options:override()
+            Main_Mango_Table.ref.ragebot.lag_options:override()
+            Main_Mango_Table.ref.antiaim.hidden:override()
         end
     end
 
@@ -855,8 +857,10 @@ function Main_Mango_Table:Standing_AA_Modifier()
         Standing_Flag_2 = false
     end
 
+    -- ui.find("Aimbot", "Anti Aim", "Angles", "Yaw", "Offset"):override(-60)
+
     if Main.Items.Standing_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        Main_Mango_Table:wait({
+        wait({
             time = Main.Items.Standing_AA_Y_Time:get()/10,
             flag = "Standing_Jitter",
             Number = 0.1,
@@ -864,43 +868,43 @@ function Main_Mango_Table:Standing_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     Standing_Flag_2 = true
                     if math.random(1, 2) == 1 then
-                        Menu_neverlose.ref.antiaim.offset:override(-60)
+                        Main_Mango_Table.ref.antiaim.offset:set(-60)
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(60)
+                        Main_Mango_Table.ref.antiaim.offset:set(60)
                     end
                 else
                     if Standing_Flag then
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Right:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Standing_AA_Y_Add_Right:get())
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Left:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Standing_AA_Y_Add_Left:get())
                     end
                 end
                 Standing_Flag = not Standing_Flag
             end
         })
-        Main_Mango_Table:wait({
+        wait({
             time = 1,
             flag = "Standing_Flick",
             Number = 0.9,
             callback = function()
                 if Standing_Flag_2 then
-                    Menu_neverlose.ref.antiaim.offset:override(0)
+                    Main_Mango_Table.ref.antiaim.offset:set(0)
                     Standing_Flag_2 = false
                 end
             end
         })
-        -- Main_Mango_Table:AAWait(Main.Items.Standing_AA_Y_Time:get(), function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Right:get())
-        -- end, function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Left:get())
-        -- end)
+        Main_Mango_Table:AAWait(Main.Items.Standing_AA_Y_Time:get(), function()
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Standing_AA_Y_Add_Right:get())
+        end, function()
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Standing_AA_Y_Add_Left:get())
+        end)
     end
 
     if Main.Items.Standing_AA_Yaw_Add_Type:get() == 'Static' then
-        if Menu_neverlose.ref.antiaim.inverter:get() then
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Left:get())
+        if Main_Mango_Table.ref.antiaim.inverter:get() then
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Standing_AA_Y_Add_Left:get())
         else
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Standing_AA_Y_Add_Right:get())
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Standing_AA_Y_Add_Right:get())
         end
     end
 
@@ -911,13 +915,13 @@ function Main_Mango_Table:Standing_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.Standing_AA_YM_Modifier:get())
-        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
+        Main_Mango_Table.ref.antiaim.ymoffset:override(Main.Items.Standing_AA_YM_Modifier:get())
+        Main_Mango_Table.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Standing_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Standing_AA_Right_Limit:get())
-    Menu_neverlose.ref.antiaim.options:override(Main.Items.Standing_AA_Options:get())
+    Main_Mango_Table.ref.antiaim.options:override(Main.Items.Standing_AA_Options:get())
 
     if Main.Items.Standing_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Standing_AA_Extended_Angels:get())
@@ -946,7 +950,7 @@ Main.Items[Setting.."_AA_Yaw_Modifier"] = Builder_Section:combo("W ~ Yaw Modifie
 
 Main.Items[Setting.."_AA_Left_Limit"] = Builder_Section:slider("W ~ Left Limit", 0, 60, 0, 1)
 Main.Items[Setting.."_AA_Right_Limit"] = Builder_Section:slider("W ~ Right Limit", 0, 60, 0, 1)
-Main.Items[Setting.."_AA_Options"] = Builder_Section:selectable("W ~ Options", Menu_neverlose.ref.antiaim.options:list())
+Main.Items[Setting.."_AA_Options"] = Builder_Section:selectable("W ~ Options", Main_Mango_Table.ref.antiaim.options:list())
 Main.Items[Setting.."_AA_Extended_Angels"] = Builder_Section:switch("W ~ Extended Angels", false)
 
 Main.Items[Setting.."_AA_Y_Add_Left"] = Main.Items[Setting.."_AA_Yaw_Add_Type"]:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -968,7 +972,7 @@ end)
 
 
 function Main_Mango_Table:Walking_AA_Modifier()
-    if Menu_neverlose.ref.antiaim.fs:get() then return end
+    if Main_Mango_Table.ref.antiaim.fs:get() then return end
     if not Main.Items[Setting.."_AA_Enable"]:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -1031,17 +1035,17 @@ function Main_Mango_Table:Walking_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- Menu_neverlose.ref.ragebot.hs:override(true)
-            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
+            -- Main_Mango_Table.ref.ragebot.hs:override(true)
+            Main_Mango_Table.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
-            rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
-            Menu_neverlose.ref.antiaim.hidden:override(true)
+            rage.antiaim:override_hidden_yaw_offset(yaw_override or 0)
+            Main_Mango_Table.ref.ragebot.lag_options:override("Always On")
+            Main_Mango_Table.ref.antiaim.hidden:override(true)
         else
-            -- Menu_neverlose.ref.ragebot.hs:override()
-            Menu_neverlose.ref.ragebot.hs_options:override()
-            Menu_neverlose.ref.ragebot.lag_options:override()
-            Menu_neverlose.ref.antiaim.hidden:override()
+            -- Main_Mango_Table.ref.ragebot.hs:override()
+            Main_Mango_Table.ref.ragebot.hs_options:override()
+            Main_Mango_Table.ref.ragebot.lag_options:override()
+            Main_Mango_Table.ref.antiaim.hidden:override()
         end
     end
 
@@ -1051,7 +1055,7 @@ function Main_Mango_Table:Walking_AA_Modifier()
     end
 
     if Main.Items.Walking_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        Main_Mango_Table:wait({
+        wait({
             time = Main.Items.Walking_AA_Y_Time:get()/10,
             flag = "Walking_Jitter",
             Number = 0.1,
@@ -1059,43 +1063,43 @@ function Main_Mango_Table:Walking_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     Walking_Flag_2 = true
                     if math.random(1, 2) == 1 then
-                        Menu_neverlose.ref.antiaim.offset:override(-60)
+                        Main_Mango_Table.ref.antiaim.offset:set(-60)
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(60)
+                        Main_Mango_Table.ref.antiaim.offset:set(60)
                     end
                 else
                     if Walking_Flag then
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Right:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Walking_AA_Y_Add_Right:get())
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Left:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Walking_AA_Y_Add_Left:get())
                     end
                 end
                 Walking_Flag = not Walking_Flag
             end
         })
-        Main_Mango_Table:wait({
+        wait({
             time = 1,
             flag = "Walking_Flick",
             Number = 0.9,
             callback = function()
                 if Walking_Flag_2 then
-                    Menu_neverlose.ref.antiaim.offset:override(0)
+                    Main_Mango_Table.ref.antiaim.offset:set(0)
                     Walking_Flag_2 = false
                 end
             end
         })
         -- Main_Mango_Table:AAWait(Main.Items.Walking_AA_Y_Time:get(), function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Right:get())
+        --     Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Walking_AA_Y_Add_Right:get())
         -- end, function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Left:get())
+        --     Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Walking_AA_Y_Add_Left:get())
         -- end)
     end
 
     if Main.Items.Walking_AA_Yaw_Add_Type:get() == 'Static' then
-        if Menu_neverlose.ref.antiaim.inverter:get() then
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Left:get())
+        if Main_Mango_Table.ref.antiaim.inverter:get() then
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Walking_AA_Y_Add_Left:get())
         else
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Walking_AA_Y_Add_Right:get())
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Walking_AA_Y_Add_Right:get())
         end
     end
 
@@ -1106,13 +1110,13 @@ function Main_Mango_Table:Walking_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.Walking_AA_YM_Modifier:get())
-        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
+        Main_Mango_Table.ref.antiaim.ymoffset:override(Main.Items.Walking_AA_YM_Modifier:get())
+        Main_Mango_Table.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Walking_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Walking_AA_Right_Limit:get())
-    Menu_neverlose.ref.antiaim.options:override(Main.Items.Walking_AA_Options:get())
+    Main_Mango_Table.ref.antiaim.options:override(Main.Items.Walking_AA_Options:get())
 
     if Main.Items.Walking_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Walking_AA_Extended_Angels:get())
@@ -1140,7 +1144,7 @@ Main.Items.Running_AA_Yaw_Modifier = Builder_Section:combo("R ~ Yaw Modifier", Y
 
 Main.Items.Running_AA_Left_Limit = Builder_Section:slider("R ~ Left Limit", 0, 60, 0, 1)
 Main.Items.Running_AA_Right_Limit = Builder_Section:slider("R ~ Right Limit", 0, 60, 0, 1)
-Main.Items.Running_AA_Options = Builder_Section:selectable("R ~ Options", Menu_neverlose.ref.antiaim.options:list())
+Main.Items.Running_AA_Options = Builder_Section:selectable("R ~ Options", Main_Mango_Table.ref.antiaim.options:list())
 Main.Items.Running_AA_Extended_Angels = Builder_Section:switch("R ~ Extended Angels", false)
 
 Main.Items.Running_AA_Y_Add_Left = Main.Items.Running_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -1161,7 +1165,7 @@ end)
 
 
 function Main_Mango_Table:Running_AA_Modifier()
-    if Menu_neverlose.ref.antiaim.fs:get() then return end
+    if Main_Mango_Table.ref.antiaim.fs:get() then return end
     if not Main.Items.Running_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -1224,17 +1228,17 @@ function Main_Mango_Table:Running_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- Menu_neverlose.ref.ragebot.hs:override(true)
-            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
+            -- Main_Mango_Table.ref.ragebot.hs:override(true)
+            Main_Mango_Table.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
-            rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
-            Menu_neverlose.ref.antiaim.hidden:override(true)
+            rage.antiaim:override_hidden_yaw_offset(yaw_override or 0)
+            Main_Mango_Table.ref.ragebot.lag_options:override("Always On")
+            Main_Mango_Table.ref.antiaim.hidden:override(true)
         else
-            -- Menu_neverlose.ref.ragebot.hs:override()
-            Menu_neverlose.ref.ragebot.hs_options:override()
-            Menu_neverlose.ref.ragebot.lag_options:override()
-            Menu_neverlose.ref.antiaim.hidden:override()
+            -- Main_Mango_Table.ref.ragebot.hs:override()
+            Main_Mango_Table.ref.ragebot.hs_options:override()
+            Main_Mango_Table.ref.ragebot.lag_options:override()
+            Main_Mango_Table.ref.antiaim.hidden:override()
         end
     end
 
@@ -1244,7 +1248,7 @@ function Main_Mango_Table:Running_AA_Modifier()
     end
 
     if Main.Items.Running_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        Main_Mango_Table:wait({
+        wait({
             time = Main.Items.Running_AA_Y_Time:get()/10,
             flag = "Running_Jitter",
             Number = 0.1,
@@ -1252,43 +1256,43 @@ function Main_Mango_Table:Running_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     Running_Flag_2 = true
                     if math.random(1, 2) == 1 then
-                        Menu_neverlose.ref.antiaim.offset:override(-60)
+                        Main_Mango_Table.ref.antiaim.offset:set(-60)
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(60)
+                        Main_Mango_Table.ref.antiaim.offset:set(60)
                     end
                 else
                     if Running_Flag then
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Right:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Running_AA_Y_Add_Right:get())
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Left:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Running_AA_Y_Add_Left:get())
                     end
                 end
                 Running_Flag = not Running_Flag
             end
         })
-        Main_Mango_Table:wait({
+        wait({
             time = 1,
             flag = "Running_Flick",
             Number = 0.9,
             callback = function()
                 if Running_Flag_2 then
-                    Menu_neverlose.ref.antiaim.offset:override(0)
+                    Main_Mango_Table.ref.antiaim.offset:set(0)
                     Running_Flag_2 = false
                 end
             end
         })
         -- Main_Mango_Table:AAWait(Main.Items.Running_AA_Y_Time:get(), function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Right:get())
+        --     Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Running_AA_Y_Add_Right:get())
         -- end, function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Left:get())
+        --     Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Running_AA_Y_Add_Left:get())
         -- end)
     end
 
     if Main.Items.Running_AA_Yaw_Add_Type:get() == 'Static' then
-        if Menu_neverlose.ref.antiaim.inverter:get() then
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Left:get())
+        if Main_Mango_Table.ref.antiaim.inverter:get() then
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Running_AA_Y_Add_Left:get())
         else
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Running_AA_Y_Add_Right:get())
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Running_AA_Y_Add_Right:get())
         end
     end
 
@@ -1299,13 +1303,13 @@ function Main_Mango_Table:Running_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.Running_AA_YM_Modifier:get())
-        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
+        Main_Mango_Table.ref.antiaim.ymoffset:override(Main.Items.Running_AA_YM_Modifier:get())
+        Main_Mango_Table.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Running_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Running_AA_Right_Limit:get())
-    Menu_neverlose.ref.antiaim.options:override(Main.Items.Running_AA_Options:get())
+    Main_Mango_Table.ref.antiaim.options:override(Main.Items.Running_AA_Options:get())
 
     if Main.Items.Running_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Running_AA_Extended_Angels:get())
@@ -1334,7 +1338,7 @@ Main.Items.Crouching_AA_Yaw_Modifier = Builder_Section:combo("C ~ Yaw Modifier",
 
 Main.Items.Crouching_AA_Left_Limit = Builder_Section:slider("C ~ Left Limit", 0, 60, 0, 1)
 Main.Items.Crouching_AA_Right_Limit = Builder_Section:slider("C ~ Right Limit", 0, 60, 0, 1)
-Main.Items.Crouching_AA_Options = Builder_Section:selectable("C ~ Options", Menu_neverlose.ref.antiaim.options:list())
+Main.Items.Crouching_AA_Options = Builder_Section:selectable("C ~ Options", Main_Mango_Table.ref.antiaim.options:list())
 Main.Items.Crouching_AA_Extended_Angels = Builder_Section:switch("C ~ Extended Angels", false)
 
 Main.Items.Crouching_AA_Y_Add_Left = Main.Items.Crouching_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -1356,7 +1360,7 @@ end)
 
 
 function Main_Mango_Table:Crouching_AA_Modifier()
-    if Menu_neverlose.ref.antiaim.fs:get() then return end
+    if Main_Mango_Table.ref.antiaim.fs:get() then return end
     if not Main.Items.Crouching_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -1419,17 +1423,17 @@ function Main_Mango_Table:Crouching_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- Menu_neverlose.ref.ragebot.hs:override(true)
-            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
+            -- Main_Mango_Table.ref.ragebot.hs:override(true)
+            Main_Mango_Table.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
-            rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
-            Menu_neverlose.ref.antiaim.hidden:override(true)
+            rage.antiaim:override_hidden_yaw_offset(yaw_override or 0)
+            Main_Mango_Table.ref.ragebot.lag_options:override("Always On")
+            Main_Mango_Table.ref.antiaim.hidden:override(true)
         else
-            -- Menu_neverlose.ref.ragebot.hs:override()
-            Menu_neverlose.ref.ragebot.hs_options:override()
-            Menu_neverlose.ref.ragebot.lag_options:override()
-            Menu_neverlose.ref.antiaim.hidden:override()
+            -- Main_Mango_Table.ref.ragebot.hs:override()
+            Main_Mango_Table.ref.ragebot.hs_options:override()
+            Main_Mango_Table.ref.ragebot.lag_options:override()
+            Main_Mango_Table.ref.antiaim.hidden:override()
         end
     end
 
@@ -1439,7 +1443,7 @@ function Main_Mango_Table:Crouching_AA_Modifier()
     end
 
     if Main.Items.Crouching_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        Main_Mango_Table:wait({
+        wait({
             time = Main.Items.Crouching_AA_Y_Time:get()/10,
             flag = "Crouching_Jitter",
             Number = 0.1,
@@ -1447,44 +1451,44 @@ function Main_Mango_Table:Crouching_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     Crouching_Flag2 = true
                     if math.random(1, 2) == 1 then
-                        Menu_neverlose.ref.antiaim.offset:override(-60)
+                        Main_Mango_Table.ref.antiaim.offset:set(-60)
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(60)
+                        Main_Mango_Table.ref.antiaim.offset:set(60)
                     end
                 else
                     if Crouching_Flag then
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Right:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Crouching_AA_Y_Add_Right:get())
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Left:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Crouching_AA_Y_Add_Left:get())
                     end
                 end
 
                 Crouching_Flag = not Crouching_Flag
             end
         })
-        Main_Mango_Table:wait({
+        wait({
             time = 1,
             flag = "Crouching_Flick",
             Number = 0.9,
             callback = function()
                 if Crouching_Flag2 then
-                    Menu_neverlose.ref.antiaim.offset:override(0)
+                    Main_Mango_Table.ref.antiaim.offset:set(0)
                     Crouching_Flag2 = false
                 end
             end
         })
         -- Main_Mango_Table:AAWait(Main.Items.Crouching_AA_Y_Time:get(), function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Right:get())
+        --     Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Crouching_AA_Y_Add_Right:get())
         -- end, function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Left:get())
+        --     Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Crouching_AA_Y_Add_Left:get())
         -- end)
     end
 
     if Main.Items.Crouching_AA_Yaw_Add_Type:get() == 'Static' then
-        if Menu_neverlose.ref.antiaim.inverter:get() then
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Left:get())
+        if Main_Mango_Table.ref.antiaim.inverter:get() then
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Crouching_AA_Y_Add_Left:get())
         else
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.Crouching_AA_Y_Add_Right:get())
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.Crouching_AA_Y_Add_Right:get())
         end
     end
 
@@ -1495,13 +1499,13 @@ function Main_Mango_Table:Crouching_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.Crouching_AA_YM_Modifier:get())
-        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
+        Main_Mango_Table.ref.antiaim.ymoffset:override(Main.Items.Crouching_AA_YM_Modifier:get())
+        Main_Mango_Table.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.Crouching_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.Crouching_AA_Right_Limit:get())
-    Menu_neverlose.ref.antiaim.options:override(Main.Items.Crouching_AA_Options:get())
+    Main_Mango_Table.ref.antiaim.options:override(Main.Items.Crouching_AA_Options:get())
 
     if Main.Items.Crouching_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.Crouching_AA_Extended_Angels:get())
@@ -1529,7 +1533,7 @@ Main.Items.In_Air_AA_Yaw_Modifier = Builder_Section:combo("A ~ Yaw Modifier", Ya
 
 Main.Items.In_Air_AA_Left_Limit = Builder_Section:slider("A ~ Left Limit", 0, 60, 0, 1)
 Main.Items.In_Air_AA_Right_Limit = Builder_Section:slider("A ~ Right Limit", 0, 60, 0, 1)
-Main.Items.In_Air_AA_Options = Builder_Section:selectable("A ~ Options", Menu_neverlose.ref.antiaim.options:list())
+Main.Items.In_Air_AA_Options = Builder_Section:selectable("A ~ Options", Main_Mango_Table.ref.antiaim.options:list())
 Main.Items.In_Air_AA_Extended_Angels = Builder_Section:switch("A ~ Extended Angels", false)
 
 Main.Items.In_Air_AA_Y_Add_Left = Main.Items.In_Air_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -1551,7 +1555,7 @@ end)
 
 
 function Main_Mango_Table:In_Air_AA_Modifier()
-    if Menu_neverlose.ref.antiaim.fs:get() then return end
+    if Main_Mango_Table.ref.antiaim.fs:get() then return end
     if not Main.Items.In_Air_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -1614,17 +1618,17 @@ function Main_Mango_Table:In_Air_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- Menu_neverlose.ref.ragebot.hs:override(true)
-            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
+            -- Main_Mango_Table.ref.ragebot.hs:override(true)
+            Main_Mango_Table.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
-            rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
-            Menu_neverlose.ref.antiaim.hidden:override(true)
+            rage.antiaim:override_hidden_yaw_offset(yaw_override or 0)
+            Main_Mango_Table.ref.ragebot.lag_options:override("Always On")
+            Main_Mango_Table.ref.antiaim.hidden:override(true)
         else
-            -- Menu_neverlose.ref.ragebot.hs:override()
-            Menu_neverlose.ref.ragebot.hs_options:override()
-            Menu_neverlose.ref.ragebot.lag_options:override()
-            Menu_neverlose.ref.antiaim.hidden:override()
+            -- Main_Mango_Table.ref.ragebot.hs:override()
+            Main_Mango_Table.ref.ragebot.hs_options:override()
+            Main_Mango_Table.ref.ragebot.lag_options:override()
+            Main_Mango_Table.ref.antiaim.hidden:override()
         end
     end
 
@@ -1634,7 +1638,7 @@ function Main_Mango_Table:In_Air_AA_Modifier()
     end
 
     if Main.Items.In_Air_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        Main_Mango_Table:wait({
+        wait({
             time = Main.Items.In_Air_AA_Y_Time:get()/10,
             flag = "In_Air_Jitter",
             Number = 0.1,
@@ -1642,43 +1646,43 @@ function Main_Mango_Table:In_Air_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     In_Air_Flag2 = true
                     if math.random(1, 2) == 1 then
-                        Menu_neverlose.ref.antiaim.offset:override(-60)
+                        Main_Mango_Table.ref.antiaim.offset:set(-60)
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(60)
+                        Main_Mango_Table.ref.antiaim.offset:set(60)
                     end
                 else
                     if In_Air_Flag then
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Right:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AA_Y_Add_Right:get())
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Left:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AA_Y_Add_Left:get())
                     end
                 end
                 In_Air_Flag = not In_Air_Flag
             end
         })
-        Main_Mango_Table:wait({
+        wait({
             time = 1,
             flag = "In_Air_Flick",
             Number = 0.9,
             callback = function()
                 if In_Air_Flag2 then
-                    Menu_neverlose.ref.antiaim.offset:override(0)
+                    Main_Mango_Table.ref.antiaim.offset:set(0)
                     In_Air_Flag2 = false
                 end
             end
         })
         -- Main_Mango_Table:AAWait(Main.Items.In_Air_AA_Y_Time:get(), function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Right:get())
+        --     Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AA_Y_Add_Right:get())
         -- end, function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Left:get())
+        --     Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AA_Y_Add_Left:get())
         -- end)
     end
 
     if Main.Items.In_Air_AA_Yaw_Add_Type:get() == 'Static' then
-        if Menu_neverlose.ref.antiaim.inverter:get() then
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Left:get())
+        if Main_Mango_Table.ref.antiaim.inverter:get() then
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AA_Y_Add_Left:get())
         else
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AA_Y_Add_Right:get())
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AA_Y_Add_Right:get())
         end
     end
 
@@ -1689,13 +1693,13 @@ function Main_Mango_Table:In_Air_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.In_Air_AA_YM_Modifier:get())
-        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
+        Main_Mango_Table.ref.antiaim.ymoffset:override(Main.Items.In_Air_AA_YM_Modifier:get())
+        Main_Mango_Table.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.In_Air_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.In_Air_AA_Right_Limit:get())
-    Menu_neverlose.ref.antiaim.options:override(Main.Items.In_Air_AA_Options:get())
+    Main_Mango_Table.ref.antiaim.options:override(Main.Items.In_Air_AA_Options:get())
 
     if Main.Items.In_Air_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.In_Air_AA_Extended_Angels:get())
@@ -1723,7 +1727,7 @@ Main.Items.In_Air_AC_AA_Yaw_Modifier = Builder_Section:combo("AC ~ Yaw Modifier"
 
 Main.Items.In_Air_AC_AA_Left_Limit = Builder_Section:slider("AC ~ Left Limit", 0, 60, 0, 1)
 Main.Items.In_Air_AC_AA_Right_Limit = Builder_Section:slider("AC ~ Right Limit", 0, 60, 0, 1)
-Main.Items.In_Air_AC_AA_Options = Builder_Section:selectable("AC ~ Options", Menu_neverlose.ref.antiaim.options:list())
+Main.Items.In_Air_AC_AA_Options = Builder_Section:selectable("AC ~ Options", Main_Mango_Table.ref.antiaim.options:list())
 Main.Items.In_Air_AC_AA_Extended_Angels = Builder_Section:switch("AC ~ Extended Angels", false)
 
 Main.Items.In_Air_AC_AA_Y_Add_Left = Main.Items.In_Air_AC_AA_Yaw_Add_Type:create():slider("Yaw Add - Left", -90, 90, 0, 1)
@@ -1745,7 +1749,7 @@ end)
 
 
 function Main_Mango_Table:In_Air_AC_AA_Modifier()
-    if Menu_neverlose.ref.antiaim.fs:get() then return end
+    if Main_Mango_Table.ref.antiaim.fs:get() then return end
     if not Main.Items.In_Air_AC_AA_Enable:get() or not Main.Items.Build_AA:get() then return end
 
     local exploit_state = rage.exploit:get()
@@ -1808,17 +1812,17 @@ function Main_Mango_Table:In_Air_AC_AA_Modifier()
 
     if exploit_state ~= 0 then
         if pitch_override ~= nil and yaw_settings ~= nil then
-            -- Menu_neverlose.ref.ragebot.hs:override(true)
-            Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
+            -- Main_Mango_Table.ref.ragebot.hs:override(true)
+            Main_Mango_Table.ref.ragebot.hs_options:override("Break LC")
             rage.antiaim:override_hidden_pitch(pitch_override)
-            rage.antiaim:override_hidden_yaw_offset(yaw_override)
-            Menu_neverlose.ref.ragebot.lag_options:override("Always On")
-            Menu_neverlose.ref.antiaim.hidden:override(true)
+            rage.antiaim:override_hidden_yaw_offset(yaw_override or 0)
+            Main_Mango_Table.ref.ragebot.lag_options:override("Always On")
+            Main_Mango_Table.ref.antiaim.hidden:override(true)
         else
-            -- Menu_neverlose.ref.ragebot.hs:override()
-            Menu_neverlose.ref.ragebot.hs_options:override()
-            Menu_neverlose.ref.ragebot.lag_options:override()
-            Menu_neverlose.ref.antiaim.hidden:override()
+            -- Main_Mango_Table.ref.ragebot.hs:override()
+            Main_Mango_Table.ref.ragebot.hs_options:override()
+            Main_Mango_Table.ref.ragebot.lag_options:override()
+            Main_Mango_Table.ref.antiaim.hidden:override()
         end
     end
 
@@ -1828,7 +1832,7 @@ function Main_Mango_Table:In_Air_AC_AA_Modifier()
     end
 
     if Main.Items.In_Air_AC_AA_Yaw_Add_Type:get() == 'Jitter' then -- Static
-        Main_Mango_Table:wait({
+        wait({
             time = Main.Items.In_Air_AC_AA_Y_Time:get()/10,
             flag = "In_Air_AC_Jitter",
             Number = 0.1,
@@ -1836,43 +1840,43 @@ function Main_Mango_Table:In_Air_AC_AA_Modifier()
                 if math.random(1, 5) == 5 then
                     In_Air_AC_Flag2 = true
                     if math.random(1, 2) == 1 then
-                        Menu_neverlose.ref.antiaim.offset:override(-60)
+                        Main_Mango_Table.ref.antiaim.offset:set(-60)
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(60)
+                        Main_Mango_Table.ref.antiaim.offset:set(60)
                     end
                 else
                     if In_Air_AC_Flag then
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
                     else
-                        Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
+                        Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
                     end
                 end
                 In_Air_AC_Flag = not In_Air_AC_Flag
             end
         })
-        Main_Mango_Table:wait({
+        wait({
             time = 1,
             flag = "In_Air_AC_Flick",
             Number = 0.9,
             callback = function()
                 if In_Air_AC_Flag2 then
-                    Menu_neverlose.ref.antiaim.offset:override(0)
+                    Main_Mango_Table.ref.antiaim.offset:set(0)
                     In_Air_AC_Flag2 = false
                 end
             end
         })
         -- Main_Mango_Table:AAWait(Main.Items.In_Air_AC_AA_Y_Time:get(), function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
+        --     Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
         -- end, function()
-        --     Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
+        --     Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
         -- end)
     end
 
     if Main.Items.In_Air_AC_AA_Yaw_Add_Type:get() == 'Static' then
-        if Menu_neverlose.ref.antiaim.inverter:get() then
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
+        if Main_Mango_Table.ref.antiaim.inverter:get() then
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AC_AA_Y_Add_Left:get())
         else
-            Menu_neverlose.ref.antiaim.offset:override(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
+            Main_Mango_Table.ref.antiaim.offset:set(Main.Items.In_Air_AC_AA_Y_Add_Right:get())
         end
     end
 
@@ -1883,13 +1887,13 @@ function Main_Mango_Table:In_Air_AC_AA_Modifier()
             YawModifier = Yaw_modifier_List[math.random(2, #Yaw_modifier_List)]
         end
         
-        Menu_neverlose.ref.antiaim.ymoffset:override(Main.Items.In_Air_AC_AA_YM_Modifier:get())
-        Menu_neverlose.ref.antiaim.yawmod:override(YawModifier)
+        Main_Mango_Table.ref.antiaim.ymoffset:override(Main.Items.In_Air_AC_AA_YM_Modifier:get())
+        Main_Mango_Table.ref.antiaim.yawmod:override(YawModifier)
     -- end
 
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(Main.Items.In_Air_AC_AA_Left_Limit:get())
     ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(Main.Items.In_Air_AC_AA_Right_Limit:get())
-    Menu_neverlose.ref.antiaim.options:override(Main.Items.In_Air_AC_AA_Options:get())
+    Main_Mango_Table.ref.antiaim.options:override(Main.Items.In_Air_AC_AA_Options:get())
 
     if Main.Items.In_Air_AC_AA_Extended_Angels:get() then
         ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(Main.Items.In_Air_AC_AA_Extended_Angels:get())
@@ -1929,7 +1933,7 @@ function Main_Mango_Table:Fake_Lag_AA_Modifier()
     if not localplayer then return end
 
     if Main.Items.Fake_Lag_AA_Variability_choker:get() then
-        Main_Mango_Table:wait({
+        wait({
             time = math.random(),
             flag = "Fake_Lag_Variability",
             Number = 0.01,
@@ -1949,16 +1953,16 @@ function Main_Mango_Table:Fake_Lag_AA_Modifier()
 
 
     if Main.Items.Fake_Lag_AA_Randomizer:get() then
-        Main_Mango_Table:wait({
+        wait({
             time = Main.Items.Fake_Lag_AA_Next_Phase_Time:get()/10,
             flag = "Fake_Lag_Limit",
             Number = 0.01,
             callback = function()
-                Menu_neverlose.ref.antiaim.limit:override(math.random(Main.Items.Fake_Lag_AA_Min_Limit:get(), Main.Items.Fake_Lag_AA_Max_Limit:get()))
+                Main_Mango_Table.ref.antiaim.limit:override(math.random(Main.Items.Fake_Lag_AA_Min_Limit:get(), Main.Items.Fake_Lag_AA_Max_Limit:get()))
             end
         })
     else
-        Menu_neverlose.ref.antiaim.limit:override(Main.Items.Fake_Lag_AA_Max_Limit:get())
+        Main_Mango_Table.ref.antiaim.limit:override(Main.Items.Fake_Lag_AA_Max_Limit:get())
     end
 
 end
@@ -1991,7 +1995,7 @@ function Main_Mango_Table:GetState()
 end
 
 
-function Main_Mango_Table:AntiAim_createmove(cmd)
+function AntiAim_createmove(cmd)
     if not Main.Items.Build_AA:get() then return end
 
     if Main_Mango_Table:GetState() == "Standing" and Main.Items.Standing_AA_Enable:get() then
@@ -2067,7 +2071,7 @@ function Main_Mango_Table:tablefind(tbl, value)
     return nil
 end
 
-function Main_Mango_Table:Rand_Multipoint()
+function Rand_Multipoint()
     if not Main.Items.Randomize_Multipoint:get() then return end
     -- table.foreach(Main.Items.Randomize_Multipoint_AllowedWeapons:get(), print)
     for i,v in pairs(weapons) do
@@ -2081,53 +2085,53 @@ function Main_Mango_Table:Rand_Multipoint()
     end
 end
 
-function Main_Mango_Table:Randomize_DT_Ticks(cmd)
+function Randomize_DT_Ticks(cmd)
     if not Main.Items.randomize:get() then return end
     if Main.Items.Min:get() > Main.Items.Max:get() then
         Main.Items.Max:set(Main.Items.Min:get())
     end
-    Menu_neverlose.ref.ragebot.lag_limit:override(math.random(Main.Items.Min:get(), Main.Items.Max:get()))
+    Main_Mango_Table.ref.ragebot.lag_limit:override(math.random(Main.Items.Min:get(), Main.Items.Max:get()))
 end
 
-function Main_Mango_Table:Enemy_Anti_Head()
+function Enemy_Anti_Head()
     if not Main.Items.AntiHead:get() then return end
     if Main.Items.manualaa:get() ~= "None" then return end
     local Enemies_Table = entity.get_players(true, false)
     for i,v in pairs(Enemies_Table) do
         if Main_Mango_Table:Get_Enemy_Visible(v, true, true) then
             Main.Items.Build_AA:override(false)
-            if Menu_neverlose.ref.ragebot.dt:get() or Menu_neverlose.ref.ragebot.hs:get() then
+            if Main_Mango_Table.ref.ragebot.dt:get() or Main_Mango_Table.ref.ragebot.hs:get() then
                 rage.antiaim:override_hidden_pitch(math.random(-89, 89))
                 rage.antiaim:override_hidden_yaw_offset(math.random(-360, 360))
-                Menu_neverlose.ref.ragebot.lag_options:override("Always On")
-                Menu_neverlose.ref.ragebot.hs_options:override("Break LC")
-                Menu_neverlose.ref.antiaim.hidden:override(true)
+                Main_Mango_Table.ref.ragebot.lag_options:override("Always On")
+                Main_Mango_Table.ref.ragebot.hs_options:override("Break LC")
+                Main_Mango_Table.ref.antiaim.hidden:override(true)
             else
-                Menu_neverlose.ref.antiaim.limit:override(math.random(0, 14))
-                Menu_neverlose.ref.antiaim.offset:override(math.random(-30, 45))
+                Main_Mango_Table.ref.antiaim.limit:override(math.random(0, 14))
+                Main_Mango_Table.ref.antiaim.offset:set(math.random(-30, 45))
                 ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override(math.random(-60, 60))
                 ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override(math.random(-60, 60))
-                Menu_neverlose.ref.antiaim.ymoffset:override(math.random(-34, 34))
+                Main_Mango_Table.ref.antiaim.ymoffset:override(math.random(-34, 34))
             end
         else
             -- Main.Items.Build_AA:override()
-            -- Menu_neverlose.ref.ragebot.lag_options:override()
-            -- Menu_neverlose.ref.antiaim.hidden:override()
-            -- Menu_neverlose.ref.ragebot.hs_options:override()
+            -- Main_Mango_Table.ref.ragebot.lag_options:override()
+            -- Main_Mango_Table.ref.antiaim.hidden:override()
+            -- Main_Mango_Table.ref.ragebot.hs_options:override()
             -- ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Right Limit"):override()
-            -- Menu_neverlose.ref.antiaim.limit:override()
+            -- Main_Mango_Table.ref.antiaim.limit:override()
             -- ui.find("Aimbot", "Anti Aim", "Angles", "Body Yaw", "Left Limit"):override()
-            -- Menu_neverlose.ref.antiaim.ymoffset:override()
+            -- Main_Mango_Table.ref.antiaim.ymoffset:override()
         end
     end
 end
 
-function Main_Mango_Table:manual_aa()
+function manual_aa()
 
-    yaw = Menu_neverlose.ref.antiaim.yaw
-    base = Menu_neverlose.ref.antiaim.base
-    offset = Menu_neverlose.ref.antiaim.offset
-    fs = Menu_neverlose.ref.antiaim.fs
+    yaw = Main_Mango_Table.ref.antiaim.yaw
+    base = Main_Mango_Table.ref.antiaim.base
+    offset = Main_Mango_Table.ref.antiaim.offset
+    fs = Main_Mango_Table.ref.antiaim.fs
 
         if Main.Items.manualaa:get() == "Left" then
             yaw:override("Backward")
@@ -2168,7 +2172,7 @@ function Main_Mango_Table:manual_aa()
         end
 end
 
-function Main_Mango_Table:fix_nade()
+function fix_nade()
     if not Main.Items.fix_nade:get() then return end
     local lp = entity.get_local_player()
     if not (lp or lp:is_alive()) then return end
@@ -2181,13 +2185,13 @@ function Main_Mango_Table:fix_nade()
     end
 end
 
-function Main_Mango_Table:fix_fakeduck()
-    if not Menu_neverlose.ref.antiaim.fd:get() then return end
-    Menu_neverlose.ref.antiaim.limit:override(14)
+function fix_fakeduck()
+    if not Main_Mango_Table.ref.antiaim.fd:get() then return end
+    Main_Mango_Table.ref.antiaim.limit:override(14)
     ui.find("Aimbot", "Anti Aim", "Angles", "Extended Angles"):override(false)
 end
 
-function Main_Mango_Table:no_fall_damage(cmd)
+function no_fall_damage(cmd)
     if not Main.Items.no_fall_damage:get() then return end
     local lp = entity.get_local_player()
     if lp == nil then return end
@@ -2201,7 +2205,7 @@ function Main_Mango_Table:no_fall_damage(cmd)
     end
 end
 
-function Main_Mango_Table:fastladder(cmd)
+function fastladder(cmd)
     if not Main.Items.fastladder:get() then return end
     local lp = entity.get_local_player()
     if not lp then return end
@@ -2243,9 +2247,9 @@ function Main_Mango_Table:always_choke_slient_shots()
                 
                 if time_difference <= 0.025 then
                     if Main.Items.Slientshots_Mode:get() == "Overrides" then
-                        Menu_neverlose.ref.antiaim.bodyyaw:override(false)
-                        Menu_neverlose.ref.antiaim.fl_enabled:override(false)
-                        Menu_neverlose.ref.antiaim.limit:override(1)
+                        Main_Mango_Table.ref.antiaim.bodyyaw:override(false)
+                        Main_Mango_Table.ref.antiaim.fl_enabled:override(false)
+                        Main_Mango_Table.ref.antiaim.limit:override(1)
                     elseif Main.Items.Slientshots_Mode:get() == "Send packets" then
                         --sendpacket_switch = true
                         cmd.no_choke = true
@@ -2255,9 +2259,9 @@ function Main_Mango_Table:always_choke_slient_shots()
                         cmd.no_choke = true
                     end
                 else
-                    Menu_neverlose.ref.antiaim.bodyyaw:override()
-                    Menu_neverlose.ref.antiaim.fl_enabled:override()
-                    Menu_neverlose.ref.antiaim.limit:override()
+                    Main_Mango_Table.ref.antiaim.bodyyaw:override()
+                    Main_Mango_Table.ref.antiaim.fl_enabled:override()
+                    Main_Mango_Table.ref.antiaim.limit:override()
                 end
             end
         end
@@ -2363,7 +2367,7 @@ local n1_table = {
 }
 
 
-function Main_Mango_Table:Visibility_easy()
+function Visibility_easy()
     for i,v in pairs(Main.Items) do
         if string.find(i, "CustScope") then
             v:visibility(Main.Items.CScope:get())
@@ -2601,7 +2605,7 @@ end
 
 local Exploit = 0
 
-function Main_Mango_Table:Visuals_Createmove()
+function Visuals_Createmove()
     Exploit = rage.exploit:get()
 end
 
@@ -2612,7 +2616,7 @@ Main.Items.x = Main.Items.viewmodel:create():slider("X", - 15, 15, 0)
 Main.Items.y = Main.Items.viewmodel:create():slider("Y", - 15, 15, 0)
 Main.Items.z = Main.Items.viewmodel:create():slider("Z", - 15, 15, 0)
 
-function Main_Mango_Table:viewmodel()
+function viewmodel()
 
     fov = Main.Items.fov:get()
     x = Main.Items.x:get()
@@ -2638,13 +2642,13 @@ end
 local font = render.load_font("c:/windows/fonts/calibrib.ttf", 28, "ad")
 local alpha = 255
 
-function Main_Mango_Table:Visuals_Indicator()
+function Visuals_Indicator()
     if not Main.Items.CE:get() then return end
     local localplayer = entity.get_local_player()
     local screen_size = Main.helpers.screen_size
-    local DoubleTap = Menu_neverlose.ref.ragebot.dt:get()
-    local HS = Menu_neverlose.ref.ragebot.hs:get()
-    local FD = Menu_neverlose.ref.antiaim.fd:get()
+    local DoubleTap = Main_Mango_Table.ref.ragebot.dt:get()
+    local HS = Main_Mango_Table.ref.ragebot.hs:get()
+    local FD = Main_Mango_Table.ref.antiaim.fd:get()
 
     local x, y = render.screen_size().x, render.screen_size().y
 
@@ -2741,7 +2745,7 @@ end
 
 Main.Items.Debug = Main.Tabs.RageMisc:switch("\a698EFFFF" .. ui.get_icon("triangle-exclamation") .. " Debug Mode")
 
-function Main_Mango_Table:debug_mode()
+function debug_mode()
 
     if not Main.Items.Debug:get() then return end
 
@@ -2816,7 +2820,7 @@ function Main_Mango_Table:PlayerZoomed()
     return false
 end
 
-function Main_Mango_Table:draw_scope_lines()
+function draw_scope_lines()
 
     if not Main.Items.CScope:get() then return end
 
@@ -2949,8 +2953,8 @@ function Main_Mango_Table:FormatTime(seconds)
     return timeString
 end
 
-function Main_Mango_Table:Update_SesionTime()
-    Main_Mango_Table:wait({
+function Update_SesionTime()
+    wait({
         time=1,
         flag="SesionTime",
         Number=0.008,
@@ -3141,7 +3145,7 @@ function Main_Mango_Table:config_save()
             cfg_data[i] = ui_value
         end
     end
-    
+
     local json_config = json.stringify(cfg_data)
     local encoded_config = Main_Mango_Table:encode(json_config)
     files.write(Configs_Path.."\\"..Main_Mango_Table:GetCFGS(Configs:get())..".lua", encoded_config)
@@ -3199,7 +3203,7 @@ CFG_ConfirmDeletion_No:set_callback(function()
     Configs:update(json.parse(files.read(Config_Data)))
 end)
 
-function Main_Mango_Table:KillSay(e)
+function KillSay(e)
     local Custom_Table = {
         Inp1:get(),
         Inp2:get(),
@@ -3229,33 +3233,52 @@ end
 
 Main.Items.Aspect_Ratio = Main.Tabs.Misc:slider("Aspect Ratio", 0, 60, 0, 1)
 
-function Main_Mango_Table:Main_CM(cmd)
-    Main_Mango_Table:no_fall_damage(cmd)
-    Main_Mango_Table:Randomize_DT_Ticks(cmd)
-    -- defensive_aa(cmd)
-    Main_Mango_Table:Visuals_Createmove()
-    Main_Mango_Table:fastladder(cmd)
-    Main_Mango_Table:fix_nade()
-    Main_Mango_Table:AntiAim_createmove(cmd)
-    Main_Mango_Table:fix_fakeduck()
-    Main_Mango_Table:Rand_Multipoint()
-    Main_Mango_Table:manual_aa()
-    Main_Mango_Table:Enemy_Anti_Head()
+function Main_CM(cmd)
     cvar.r_aspectratio:float(Main.Items.Aspect_Ratio:get() / 10)
 end
 
-function Main_Mango_Table:Main_Render(cmd)
-    Main.visuals.watermark.draw()
-    Main_Mango_Table:draw_scope_lines()
-    Main_Mango_Table:Visibility_easy()
-    Main_Mango_Table:Visuals_Indicator()
-    Main_Mango_Table:Update_SesionTime()
-    Main_Mango_Table:debug_mode()
-    Main_Mango_Table:viewmodel()
-    clantag.run()
-    -- Clan_tag()
-    -- window_title()
-end
+Main_Mango_Table.Create_Move_Main = {
+    no_fall_damage,
+    Randomize_DT_Ticks,
+    Visuals_Createmove,
+    fastladder,
+    fix_nade,
+    AntiAim_createmove,
+    fix_fakeduck,
+    Rand_Multipoint,
+    manual_aa,
+    Enemy_Anti_Head,
+    Main_CM
+}
+
+Main_Mango_Table.Render_Main = {
+    Main.visuals.watermark.draw,
+    draw_scope_lines,
+    Visibility_easy,
+    Visuals_Indicator,
+    Update_SesionTime,
+    debug_mode,
+    viewmodel,
+    clantag.run,
+}
+
+Main_Mango_Table.aim_ack_Main = {
+    KillSay
+}
+
+
+-- function Main_Mango_Table:Main_Render(cmd)
+--     Main.visuals.watermark.draw()
+--     Main_Mango_Table:draw_scope_lines()
+--     Main_Mango_Table:Visibility_easy()
+--     Main_Mango_Table:Visuals_Indicator()
+--     Main_Mango_Table:Update_SesionTime()
+--     Main_Mango_Table:debug_mode()
+--     Main_Mango_Table:viewmodel()
+--     clantag.run()
+--     -- Clan_tag()
+--     -- window_title()
+-- end
 
 
 
@@ -3279,5 +3302,36 @@ end
 return Main_Mango_Table
 
 end
+
+-- local Main_Mango_Table = Test:dev(files, color, common, cvar, entity, esp, events, globals, json, materials, math, ui, network, panorama, rage, render, utils, vector, {
+--     gradient = require("neverlose/gradient"),
+--     drag_system = require("neverlose/drag_system"),
+--     MTools = require("neverlose/mtools"),
+--     vmt_hook = require("neverlose/vmt_hook"),
+--     pui = require("neverlose/pui"),
+--     ffi = require("ffi"),
+--     csgo_weapons = require("neverlose/csgo_weapons"),
+--     clipboard = require("neverlose/clipboard"),
+-- })
+
+-- events.render:set(function(cmd)
+--     for i,v in pairs(Main_Mango_Table.Render_Main) do
+--         v(cmd)
+--     end
+-- end)
+
+-- events.createmove:set(function(cmd)
+--     for i,v in pairs(Main_Mango_Table.Create_Move_Main) do
+--         v(cmd)
+--     end
+-- end)
+
+-- events.aim_ack:set(function(cmd)
+--     for i,v in pairs(Main_Mango_Table.aim_ack_Main) do
+--         v(cmd)
+--     end
+-- end)
+
+-- Main_Mango_Table:once_callback()
 
 return Test
