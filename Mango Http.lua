@@ -1,10 +1,19 @@
+
 local Test = {}
 function Test:pr(pprint)
     pprint("script_is_ready")
 end
 
-function Test:dev(files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_, clipboard, csgo_weapons, base64)
+function Test:dev(files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_, clipboard, csgo_weapons, Options)
 local files, color, common, cvar, entity, esp, events, globals, json, materials, math, ui, network, panorama, rage, render, utils, vector, csgo_weapons = files_, color_, common_, cvar_, entity_, esp_, events_, globals_, json_, materials_, math_, ui_, network_, panorama_, rage_, render_, utils_, vector_, csgo_weapons
+
+local gradient = Options.gradient
+local drag_system = Options.drag_system
+local MTools = Options.MTools
+local vmt_hook = Options.vmt_hook
+local pui = Options.pui
+local ffi = Options.ffi
+
 
 files.create_folder('nl\\Mango')
 
@@ -32,11 +41,11 @@ local Config_Data = 'nl\\Mango\\configs.json'
 -- local Base64_ = require ('Mango\\modules\\noluck')
 
 
-local ffi = require("ffi")
+-- local ffi = require("ffi")
 
-local clipboard = require('neverlose/clipboard')
-local csgo_weapons = require('neverlose/csgo_weapons')
-local MTools = require("neverlose/mtools")
+-- local clipboard = require('neverlose/clipboard')
+-- local csgo_weapons = require('neverlose/csgo_weapons')
+-- local MTools = require("neverlose/mtools")
 
 -- common.add_notify('Mango', "Hello world!")
 
