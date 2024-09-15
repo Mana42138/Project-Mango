@@ -87,9 +87,18 @@ local js = panorama.loadstring([[
 --     user32.SetWindowTextA(user32.FindWindowA(game_window_class, new_title), game_window_title)
 -- end
 
-local Client_fps = function()
+local fps = 0
+
+Main_Mango_Table.Client_fps = function()
     local frametime = globals.frametime
-    local fps = math.floor((1.0 / frametime) + 0.5)
+    wait({
+        time = 1,
+        flag = "Client_fps",
+        Number = 0.01,
+        callback = function()
+            fps = math.floor((1.0 / frametime) + 0.5)
+        end
+    })
     return fps
 end
 
@@ -300,15 +309,6 @@ function Main_Mango_Table:AAWait(time, callback1, callback2)
             Global_Time_Has_Switched = not Global_Time_Has_Switched
             Global_Time = 0
         end
-end
-
-Main.helpers.isKeyPressed = function(keyName)
-    local vKey = Keys[string.upper(keyName)]
-    if vKey then
-        return ffi.C.GetAsyncKeyState(vKey) ~= 0
-    else
-        return false
-    end
 end
 
 Main.helpers.RGBToColorString = function(str, color)
@@ -2247,15 +2247,14 @@ function Main_Mango_Table:always_choke_slient_shots()
                 
                 if time_difference <= 0.025 then
                     if Main.Items.Slientshots_Mode:get() == "Overrides" then
-                        Main_Mango_Table.ref.antiaim.bodyyaw:override(false)
+                        pcall(function()
+                            Main_Mango_Table.ref.antiaim.bodyyaw:override(false)
+                        end)
+                        
                         Main_Mango_Table.ref.antiaim.fl_enabled:override(false)
                         Main_Mango_Table.ref.antiaim.limit:override(1)
                     elseif Main.Items.Slientshots_Mode:get() == "Send packets" then
                         --sendpacket_switch = true
-                        cmd.no_choke = true
-                        cmd.no_choke = false
-                        cmd.no_choke = true
-                        cmd.no_choke = false
                         cmd.no_choke = true
                     end
                 else
@@ -2485,23 +2484,15 @@ Main.visuals.watermark.tag.vars = {
     timer = 0
 }
 
--- Function to update and run the animation
 Main.visuals.watermark.tag.run = function()
-    local curtime = math.floor(globals.curtime * 2)  -- Speed control (change multiplier for faster/slower)
+    local curtime = math.floor(globals.curtime * 2)
     
-    -- Avoid redundant updates if the time hasn't changed
     if Main.visuals.watermark.tag.vars.timer ~= curtime then
-        -- Get the correct frame of the animation using modulo operation
         local animation_frame = Main.visuals.watermark.tag.animation[curtime % #Main.visuals.watermark.tag.animation + 1]
-        
-        -- Update the timer so it only changes when curtime changes
         Main.visuals.watermark.tag.vars.timer = curtime
-
-        -- Return the updated frame text
         return animation_frame
     end
 
-    -- Default return in case no update is needed (keep the previous frame)
     return Main.visuals.watermark.tag.animation[Main.visuals.watermark.tag.vars.timer % #Main.visuals.watermark.tag.animation + 1]
 end
 
@@ -2563,8 +2554,8 @@ Main.visuals.watermark.draw = function()
     local time = string.format("%02d:%02d:%02d", local_time.hours, local_time.minutes, local_time.seconds)
 
     local ping = globals.is_in_game and math.floor(utils.net_channel().avg_latency[1] * 1000) or 0
-
-    text = text .. 'delay: ' .. ping .. 'ms | ' .. time
+    
+    text = text .. 'delay: ' .. ping .. 'ms | '..Main_Mango_Table.Client_fps().. 'fps | ' .. time
 
     local text_size = render.measure_text(1, '', text)
 
