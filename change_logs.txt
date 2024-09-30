@@ -1,0 +1,7 @@
+- Added Anti-Bruteforce
+- Added Random Inverter
+- Added Link doubletap Hitchance
+- Added AX
+- Removed Anti-Head
+- Added Double-Tap options
+- Added Randomize Multipoint under each weapon
