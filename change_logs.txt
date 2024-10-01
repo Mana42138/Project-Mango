@@ -5,3 +5,4 @@
 - Removed Anti-Head
 - Added Double-Tap options
 - Added Randomize Multipoint under each weapon
+- Fixed backend issues.
