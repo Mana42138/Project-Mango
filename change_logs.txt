@@ -6,3 +6,7 @@
 - Added Double-Tap options
 - Added Randomize Multipoint under each weapon
 - Fixed backend issues.
+
+
+
+Warning! THIS IS A BETA VERSION THERE MAY STILL BE BUGS IF YOU ENCOUNTER ANY PLEASE REPORT THEM TO ME. PRESS FORCE FULL UPDATE TO RELOADE THE SCRIPT
